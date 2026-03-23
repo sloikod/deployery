@@ -22,7 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg \
     rsync \
-    proot \
     python3 \
     sudo \
     tini \
@@ -47,7 +46,8 @@ deb http://security.ubuntu.com/ubuntu questing-security main universe\n" > /opt/
       && rm -rf /var/lib/apt/lists/*" \
     && chroot /opt/deployery/base-rootfs /bin/bash -lc "curl -fsSL https://code-server.dev/install.sh | sh" \
     && chroot /opt/deployery/base-rootfs /bin/bash -lc "useradd -m -s /bin/bash deployery && echo 'deployery ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/deployery" \
-    && chroot /opt/deployery/base-rootfs /bin/bash -lc "ln -sf /usr/bin/fdfind /usr/local/bin/fd"
+    && chroot /opt/deployery/base-rootfs /bin/bash -lc "ln -sf /usr/bin/fdfind /usr/local/bin/fd" \
+    && chroot /opt/deployery/base-rootfs /bin/bash -lc "locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8"
 
 WORKDIR /deployery
 
@@ -59,10 +59,11 @@ COPY docker/image/assets/deployery/wayland-env.sh /deployery/wayland-env.sh
 COPY docker/image/assets/deployery/virtual-pointer.py /deployery/virtual-pointer.py
 COPY docker/image/assets/deployery/fonts-local.conf /deployery/fonts-local.conf
 COPY docker/image/assets/deployery/start-code-server.sh /deployery/start-code-server.sh
+COPY docker/image/assets/deployery/start-sway.sh /deployery/start-sway.sh
 COPY docker/image/assets/deployery/install-managed-assets.sh /deployery/install-managed-assets.sh
 COPY docker/image/entrypoint.sh /entrypoint.sh
 
-RUN chmod +x /entrypoint.sh /deployery/start-code-server.sh /deployery/install-managed-assets.sh /deployery/wayland-env.sh
+RUN chmod +x /entrypoint.sh /deployery/start-code-server.sh /deployery/start-sway.sh /deployery/install-managed-assets.sh /deployery/wayland-env.sh
 
 EXPOSE 3131
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]

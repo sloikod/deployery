@@ -2,6 +2,7 @@
 # Wayland session environment — sourced by ~/.bashrc for interactive terminals.
 # Applies to all apps launched from the terminal in the Deployery sandbox.
 
+export LANG=en_US.UTF-8
 export XDG_RUNTIME_DIR=/tmp/sway-runtime
 export WAYLAND_DISPLAY=wayland-1
 export DISPLAY=:0

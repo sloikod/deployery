@@ -635,24 +635,14 @@ export class WorkflowEngine {
         const shell = step.shell ?? this.shell;
 
         return new Promise<JsonValue>((resolve, reject) => {
+            // entrypoint.sh already rbinds /dev /proc /sys /run into the sandbox
+            // rootfs, so a plain chroot is sufficient — no proot needed.
+            // The deployery user has passwordless sudo for commands requiring root.
             const child = spawn(
-                "proot",
+                "chroot",
                 [
-                    "-0",
-                    "-r",
+                    "--userspec=deployery:deployery",
                     this.sandboxRootfsPath,
-                    "-b",
-                    "/dev",
-                    "-b",
-                    "/proc",
-                    "-b",
-                    "/sys",
-                    "-b",
-                    "/tmp",
-                    "-b",
-                    "/run",
-                    "-b",
-                    `${this.sandboxRootfsPath}/tmp:/tmp`,
                     shell,
                     "-lc",
                     `cd ${JSON.stringify(cwd)} && ${step.command}`,

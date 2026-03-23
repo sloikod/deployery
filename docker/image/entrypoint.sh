@@ -45,6 +45,7 @@ export VSCODE_PROXY_URI="./proxy/{{port}}"
 EOF
 
 /deployery/install-managed-assets.sh
+/deployery/start-sway.sh &
 /deployery/start-code-server.sh &
 
 exec node /deployery/apps/api/dist/index.js

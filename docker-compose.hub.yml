@@ -2,28 +2,22 @@ name: deployery
 
 services:
   caddy:
-    build:
-      context: .
-      dockerfile: docker/caddy/Dockerfile
+    image: ghcr.io/OWNER/deployery-caddy:latest
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     environment:
       # Set to your real domain for automatic HTTPS (e.g. deploy.example.com).
-      # Leave as localhost for local development (plain HTTP on port 80).
+      # Leave unset for plain HTTP on port 80 (local / IP-only access).
       DEPLOYERY_DOMAIN: ${DEPLOYERY_DOMAIN:-localhost}
     volumes:
       - caddy_data:/data
-      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
     depends_on:
       - sandbox
 
   sandbox:
-    image: deployery:local
-    build:
-      context: .
-      dockerfile: docker/image/Dockerfile
+    image: ghcr.io/OWNER/deployery:latest
     # runtime: runsc  # Uncomment to enable gVisor on VPS hosts.
     #                  # Install: https://gvisor.dev/docs/user_guide/install/
     #                  # Requires --host-uds=all in /etc/docker/daemon.json runsc opts
