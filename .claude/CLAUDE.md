@@ -1,0 +1,1 @@
+C:/Users/sloik/Documents/Projects/deployery/.agents/AGENTS.md
