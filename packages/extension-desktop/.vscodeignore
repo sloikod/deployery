@@ -1,0 +1,7 @@
+.turbo/**
+src/**
+scripts/**
+vendor/**
+tsconfig.json
+*.tsbuildinfo
+media/*.map

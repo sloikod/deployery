@@ -1,0 +1,21 @@
+{
+  "$schema": "https://deployery.com/workflow.schema.json",
+  "triggers": [
+    {
+      "type": "manual"
+    }
+  ],
+  "steps": [
+    {
+      "command": "echo \"Hello from Deployery! Got: $INPUT\"",
+      "name": "greet",
+      "type": "command"
+    }
+  ],
+  "settings": {
+    "concurrency": {
+      "max": 1,
+      "overflow_behavior": "cancel_oldest"
+    }
+  }
+}

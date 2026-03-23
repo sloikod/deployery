@@ -1,0 +1,24 @@
+{
+  "name": "@deployery/workflow-engine",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src --max-warnings 0",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --passWithNoTests --config ../../vitest.config.ts",
+    "test:unit": "vitest run --passWithNoTests --config ../../vitest.config.ts",
+    "test:integration": "vitest run --passWithNoTests --config ../../vitest.integration.config.ts"
+  },
+  "dependencies": {
+    "@deployery/persistence": "workspace:*",
+    "@deployery/workflow-schema": "workspace:*",
+    "cronosjs": "^1.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "5.9.2",
+    "vitest": "^4.0.18"
+  }
+}

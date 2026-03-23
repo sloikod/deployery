@@ -1,0 +1,22 @@
+name: deployery
+
+services:
+  sandbox:
+    image: deployery:local
+    build:
+      context: .
+      dockerfile: docker/image/Dockerfile
+    cap_add:
+      - SYS_ADMIN
+    ports:
+      - "3131:3131"
+    environment:
+      DEPLOYERY_BASE_URL: http://localhost:3131
+      DEPLOYERY_SQLITE_PATH: /var/lib/deployery/data/deployery.sqlite
+      DEPLOYERY_SANDBOX_ROOTFS: /var/lib/deployery/sandbox-rootfs
+      DEPLOYERY_CODE_SERVER_PORT: "13337"
+    volumes:
+      - sandbox-data:/var/lib/deployery
+
+volumes:
+  sandbox-data:

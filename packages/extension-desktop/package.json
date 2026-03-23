@@ -1,0 +1,65 @@
+{
+  "name": "deployery-extension-desktop",
+  "private": true,
+  "displayName": "Deployery Desktop",
+  "description": "Per-app GUI streaming via noVNC",
+  "version": "0.3.0",
+  "license": "MIT",
+  "publisher": "deployery",
+  "engines": {
+    "vscode": "^1.109.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "deployery-desktop.enableAudio",
+        "title": "Enable Audio",
+        "icon": "$(mute)",
+        "category": "Desktop"
+      },
+      {
+        "command": "deployery-desktop.disableAudio",
+        "title": "Disable Audio",
+        "icon": "$(unmute)",
+        "category": "Desktop"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "deployery-desktop.enableAudio",
+          "when": "activeWebviewPanelId =~ /^deployery-window-/ && deployery-desktop.audioMuted",
+          "group": "navigation"
+        },
+        {
+          "command": "deployery-desktop.disableAudio",
+          "when": "activeWebviewPanelId =~ /^deployery-window-/ && !deployery-desktop.audioMuted",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "bundle-novnc": "node scripts/bundle-novnc.mjs",
+    "lint": "eslint src --max-warnings 0",
+    "check-types": "tsc --noEmit -p ./",
+    "test": "vitest run --passWithNoTests --config ../../vitest.config.ts",
+    "test:unit": "vitest run --passWithNoTests --config ../../vitest.config.ts",
+    "test:integration": "vitest run --passWithNoTests --config ../../vitest.integration.config.ts",
+    "package": "npm run bundle-novnc && vsce package --no-dependencies --allow-missing-repository --out deployery-extension-desktop.vsix"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.109.0",
+    "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.27.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.18"
+  }
+}
