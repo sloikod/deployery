@@ -636,7 +636,7 @@ export class WorkflowEngine {
 
         return new Promise<JsonValue>((resolve, reject) => {
             // entrypoint.sh already rbinds /dev /proc /sys /run into the sandbox
-            // rootfs, so a plain chroot is sufficient — no proot needed.
+            // rootfs, so a plain chroot is sufficient - no proot needed.
             // The deployery user has passwordless sudo for commands requiring root.
             const child = spawn(
                 "chroot",

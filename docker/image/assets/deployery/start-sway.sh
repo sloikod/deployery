@@ -4,7 +4,7 @@ set -euo pipefail
 SANDBOX_ROOTFS="${DEPLOYERY_SANDBOX_ROOTFS:?DEPLOYERY_SANDBOX_ROOTFS is required}"
 SANDBOX_HOME="${DEPLOYERY_SANDBOX_HOME:-/home/deployery}"
 
-# Ensure /tmp exists and is world-writable — debootstrap --variant=minbase does not
+# Ensure /tmp exists and is world-writable - debootstrap --variant=minbase does not
 # guarantee this, and rsync preserves whatever permissions the template had.
 mkdir -p "${SANDBOX_ROOTFS}/tmp"
 chmod 1777 "${SANDBOX_ROOTFS}/tmp"

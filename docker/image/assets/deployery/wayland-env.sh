@@ -1,5 +1,5 @@
 # /deployery/wayland-env.sh
-# Wayland session environment — sourced by ~/.bashrc for interactive terminals.
+# Wayland session environment - sourced by ~/.bashrc for interactive terminals.
 # Applies to all apps launched from the terminal in the Deployery sandbox.
 
 export LANG=en_US.UTF-8
@@ -17,7 +17,7 @@ export SDL_VIDEODRIVER=wayland
 # Chrome/Electron: auto-select Wayland when WAYLAND_DISPLAY is set
 export ELECTRON_OZONE_PLATFORM_HINT=auto
 
-# Software rendering — E2B VMs have no GPU; force Mesa llvmpipe so OpenGL
+# Software rendering - E2B VMs have no GPU; force Mesa llvmpipe so OpenGL
 # apps (Chrome, GTK, Qt) render via CPU instead of crashing on DRM access.
 export LIBGL_ALWAYS_SOFTWARE=1
 export GALLIUM_DRIVER=llvmpipe

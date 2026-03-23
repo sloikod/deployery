@@ -1,11 +1,11 @@
 # Self-Hosting
 
 Deployery runs as a single Docker image. You can deploy it on any Linux machine
-that can run Docker — a VPS, a home server, or your laptop.
+that can run Docker - a VPS, a home server, or your laptop.
 
 ## Requirements
 
-- Docker (with Compose) — [install guide](https://docs.docker.com/engine/install/)
+- Docker (with Compose) - [install guide](https://docs.docker.com/engine/install/)
 - 2 GB RAM minimum (4 GB recommended)
 - Linux host (Ubuntu 22.04+ recommended)
 
@@ -27,7 +27,7 @@ That's it for local or IP-only access. For a real domain with HTTPS, see below.
 ## HTTPS and Custom Domain
 
 Set `DEPLOYERY_DOMAIN` to your domain before starting. Deployery uses
-[Caddy](https://caddyserver.com) as a reverse proxy — it fetches a
+[Caddy](https://caddyserver.com) as a reverse proxy - it fetches a
 Let's Encrypt TLS certificate automatically on first request.
 
 ```bash
@@ -53,7 +53,7 @@ common providers.
 
 ### Hetzner Cloud
 
-1. Create a server — Ubuntu 24.04, CX22 (2 vCPU / 4 GB) or larger.
+1. Create a server - Ubuntu 24.04, CX22 (2 vCPU / 4 GB) or larger.
 2. SSH in and install Docker:
    ```bash
    curl -fsSL https://get.docker.com | sh
@@ -64,7 +64,7 @@ common providers.
 
 ### DigitalOcean
 
-1. Create a Droplet — Ubuntu 24.04. Pick the **Docker** Marketplace image to
+1. Create a Droplet - Ubuntu 24.04. Pick the **Docker** Marketplace image to
    skip the install step, or use any Ubuntu image and install Docker manually.
 2. Open ports 80 and 443 in the DigitalOcean Cloud Firewall (Networking →
    Firewalls).
@@ -106,7 +106,7 @@ Stop and wipe all persistent data (sandbox filesystem, database):
 docker compose -f docker-compose.hub.yml down -v
 ```
 
-`down -v` is destructive — it deletes the sandbox rootfs and all workflow
+`down -v` is destructive - it deletes the sandbox rootfs and all workflow
 state. There is no recovery after this.
 
 ---
@@ -114,8 +114,8 @@ state. There is no recovery after this.
 ## gVisor (Strong Isolation)
 
 By default, the sandbox runs under the standard Docker runtime (`runc`). For
-stronger isolation — recommended when running untrusted or autonomous AI agents
-— you can enable [gVisor](https://gvisor.dev), a user-space kernel that
+stronger isolation - recommended when running untrusted or autonomous AI agents
+- you can enable [gVisor](https://gvisor.dev), a user-space kernel that
 intercepts all syscalls made by code running inside the sandbox.
 
 gVisor is a **host-level runtime**. The Deployery image itself requires no
@@ -128,7 +128,7 @@ compose file.
 |---|---|
 | Personal use, trusted agents | `runc` (default) is fine |
 | Shared instance, autonomous agents | Enable gVisor |
-| PaaS (Railway, Render) | Not available — custom runtimes unsupported |
+| PaaS (Railway, Render) | Not available - custom runtimes unsupported |
 | VPS (Hetzner, DigitalOcean) | Supported, recommended for multi-user |
 
 ### Install gVisor on the host
@@ -175,7 +175,7 @@ docker exec -it deployery-sandbox-1 cat /proc/version
 ### Platform notes
 
 gVisor uses the **Systrap** platform by default (since 2023). Systrap does not
-require nested KVM or hardware virtualization — it works on standard Hetzner
+require nested KVM or hardware virtualization - it works on standard Hetzner
 and DigitalOcean VMs.
 
 ---
@@ -202,7 +202,7 @@ docker compose up --build
 ```
 
 This builds both the sandbox image and Caddy locally. The first build takes
-several minutes — it bootstraps a full Ubuntu environment inside the image.
+several minutes - it bootstraps a full Ubuntu environment inside the image.
 
 Development access is at `http://localhost` (port 80 via Caddy) or
 `http://localhost:3131` (sandbox API directly, bypassing Caddy).

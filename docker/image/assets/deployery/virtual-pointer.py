@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Creates a Wayland virtual pointer via zwlr_virtual_pointer_manager_v1.
 
-No uinput/kernel modules needed — pure Wayland wire protocol over the compositor
+No uinput/kernel modules needed - pure Wayland wire protocol over the compositor
 socket. Grants WL_SEAT_CAPABILITY_POINTER to the seat so wayvnc's cursor_sc path
 can capture cursor shapes and send them via RFB -239 (client-side cursor in noVNC).
 
@@ -101,7 +101,7 @@ w = WaylandClient()
 reg = w.alloc()
 w.send(1, GET_REGISTRY, _uint(reg))
 
-# Enumerate globals — look for zwlr_virtual_pointer_manager_v1
+# Enumerate globals - look for zwlr_virtual_pointer_manager_v1
 cb = w.alloc()
 w.send(1, SYNC, _uint(cb))
 vpm_name = None

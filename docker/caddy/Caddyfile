@@ -10,12 +10,12 @@
 
     # Proxy everything to the deployery API.
     reverse_proxy sandbox:3131 {
-        # Flush immediately — required for server-sent events (log streaming)
+        # Flush immediately - required for server-sent events (log streaming)
         # to deliver each line in real time rather than buffering.
         flush_interval -1
 
         # No timeouts on active connections. noVNC sessions and log streams
-        # can run for hours — cutting them off would break the live desktop
+        # can run for hours - cutting them off would break the live desktop
         # and interrupt long workflow runs.
         transport http {
             read_timeout  0

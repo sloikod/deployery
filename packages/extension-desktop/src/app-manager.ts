@@ -6,7 +6,7 @@ import { run, runSilent, sleep, AUDIO_WS_PORT, PULSE_TCP_PORT, PULSE_RUNTIME, SA
 
 export class DesktopManager implements vscode.Disposable {
     private session: SwaySession | null = null;
-    /** Panels keyed by Sway con_id — one panel per window. */
+    /** Panels keyed by Sway con_id - one panel per window. */
     private readonly panels = new Map<number, WindowPanel>();
     /**
      * Webview panel shells handed back by VS Code's WebviewPanelSerializer during
@@ -95,7 +95,7 @@ export class DesktopManager implements vscode.Disposable {
      */
     restorePanel(shell: vscode.WebviewPanel, state: PanelState) {
         if (this.panels.has(state.conId)) {
-            // Session already opened a fresh panel for this window — discard the shell.
+            // Session already opened a fresh panel for this window - discard the shell.
             shell.dispose();
             return;
         }
@@ -133,7 +133,7 @@ export class DesktopManager implements vscode.Disposable {
         this.audioStarted = true;
         try {
             await runSilent(`mkdir -p ${PULSE_RUNTIME}`);
-            // pulseaudio daemonizes — expected to succeed or already be running.
+            // pulseaudio daemonizes - expected to succeed or already be running.
             await runSilent(`XDG_RUNTIME_DIR=${PULSE_RUNTIME} pulseaudio --daemonize=yes --exit-idle-time=-1`);
             await sleep(500);
             await run(`XDG_RUNTIME_DIR=${PULSE_RUNTIME} pactl load-module module-null-sink sink_name=virtual_sink`);

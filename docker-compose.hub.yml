@@ -25,7 +25,7 @@ services:
     cap_add:
       - SYS_ADMIN
     ports:
-      # Bound to 127.0.0.1 — only reachable from this machine, not the internet.
+      # Bound to 127.0.0.1 - only reachable from this machine, not the internet.
       # Caddy proxies external traffic through ports 80/443 above.
       - "127.0.0.1:3131:3131"
     environment:

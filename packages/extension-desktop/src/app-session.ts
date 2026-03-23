@@ -6,16 +6,16 @@ import { run, runSilent, sleep, SWAY_RUNTIME_DIR, SWAY_CONFIG_PATH, DEPLOYERY_EN
 /**
  * Concept hierarchy for the Deployery desktop extension:
  *
- *   Session (SwaySession)  — Wayland compositor (Sway), one per extension lifetime.
- *   Output                 — Virtual display in Sway assigned to exactly one Window.
- *   Stream (WindowStream)  — wayvnc + websockify pipeline capturing one Output.
- *   Window (WindowInfo)    — A mapped Sway window. Tiled windows fill their Output and
+ *   Session (SwaySession)  - Wayland compositor (Sway), one per extension lifetime.
+ *   Output                 - Virtual display in Sway assigned to exactly one Window.
+ *   Stream (WindowStream)  - wayvnc + websockify pipeline capturing one Output.
+ *   Window (WindowInfo)    - A mapped Sway window. Tiled windows fill their Output and
  *                            respond to panel resize. Floating windows (dialogs, popups)
  *                            keep their natural size; the Output is sized to fit them.
  *
  * See app-manager.ts / window-panel.ts for the VS Code side:
- *   Panel (WindowPanel)    — VS Code WebviewPanel + noVNC client rendering one Stream.
- *   Manager (DesktopManager) — Ties Session + Panels together; owns the audio pipeline.
+ *   Panel (WindowPanel)    - VS Code WebviewPanel + noVNC client rendering one Stream.
+ *   Manager (DesktopManager) - Ties Session + Panels together; owns the audio pipeline.
  */
 
 /** VNC ports for wayvnc (one per window). */
@@ -23,7 +23,7 @@ const VNC_PORT_BASE = 7000;
 /** WebSocket ports for websockify bridging noVNC → wayvnc. */
 const WS_PORT_BASE = 7500;
 
-/** Minimal Sway IPC types — only the fields this code reads. */
+/** Minimal Sway IPC types - only the fields this code reads. */
 interface SwayNode {
     id: number;
     pid?: number;
@@ -141,7 +141,7 @@ export class SwaySession implements vscode.Disposable {
     private eventSub: ChildProcess | null = null;
     private virtualPointer: ChildProcess | null = null;
     private disposed = false;
-    /** Sequential port offset — incremented for each new window. Instance field so
+    /** Sequential port offset - incremented for each new window. Instance field so
      *  multiple SwaySession instances (across extension host restarts) don't share state. */
     private nextPortOffset = 0;
 
@@ -287,7 +287,7 @@ export class SwaySession implements vscode.Disposable {
     /**
      * After reattaching to an existing Sway session, rebuild the windows map by
      * walking get_tree and firing onWindowMapped for each app window found.
-     * Ports are re-assigned from offset 0 — same order → same ports as before.
+     * Ports are re-assigned from offset 0 - same order → same ports as before.
      *
      * Retries up to 3 times with a 1s delay when the tree is empty: after E2B
      * resume, Chrome (and other Wayland clients) may take a moment to re-register
@@ -310,7 +310,7 @@ export class SwaySession implements vscode.Disposable {
             .filter(n => n.type === "output")
             .map(n => `${n.name}(${collectWindowsWithOutput(n).length}w)`)
             .join(", ");
-        this.log.info(`Reconstructing ${entries.length} window(s) — outputs: [${outputSummary || "none"}]`);
+        this.log.info(`Reconstructing ${entries.length} window(s) - outputs: [${outputSummary || "none"}]`);
         for (const { outputName, win } of entries) {
             if (this.disposed) return;
             const offset = this.nextPortOffset++;
@@ -326,7 +326,7 @@ export class SwaySession implements vscode.Disposable {
 
     private async spawnVirtualPointer(): Promise<void> {
         // Kill any stale instance and wait for the kernel uinput device to be released
-        // before creating a new one — otherwise the new instance may fail silently,
+        // before creating a new one - otherwise the new instance may fail silently,
         // leaving the Wayland seat without pointer capability (clicks dropped).
         await runSilent("pkill -f virtual-pointer.py");
         await sleep(300);
@@ -387,7 +387,7 @@ export class SwaySession implements vscode.Disposable {
             } catch { /* /tmp/.X11-unix not yet created */ }
             await sleep(200);
         }
-        this.log.warn("XWayland did not start in 5s — X11 apps will not work");
+        this.log.warn("XWayland did not start in 5s - X11 apps will not work");
     }
 
     // --- Sway IPC event subscription ---
@@ -503,14 +503,14 @@ export class SwaySession implements vscode.Disposable {
         const vncPort = VNC_PORT_BASE + offset;
         const wsPort = WS_PORT_BASE + offset;
 
-        // All windows start via pendingWindows — panel-resize drives output size.
+        // All windows start via pendingWindows - panel-resize drives output size.
         // After stream starts, we check if the window actually filled the output.
         // If not (non-resizable dialog/tool), we correct the output size then.
         await this.logOutputInfo(outputName);
         await this.logWindowGeometry(conId);
         if (this.disposed) return;
         this.pendingWindows.set(conId, { outputName, vncPort, wsPort });
-        this.log.info(`Window pending: con_id=${conId} output=${outputName} wsPort=${wsPort} — awaiting first panel-resize`);
+        this.log.info(`Window pending: con_id=${conId} output=${outputName} wsPort=${wsPort} - awaiting first panel-resize`);
         this.listener.onWindowMapped(this, { conId, wsPort, title, appId });
     }
 
@@ -520,15 +520,15 @@ export class SwaySession implements vscode.Disposable {
         // sends it to noVNC via RFB cursor-shape pseudo-encoding. noVNC renders the cursor
         // client-side with zero lag. Combined with `seat * hide_cursor 1` in the Sway
         // config, the cursor is hidden from the compositor output so it is never baked
-        // into screencopy frames — eliminating the lagging second cursor.
+        // into screencopy frames - eliminating the lagging second cursor.
         // No --render-cursor: that flag bakes the cursor into screencopy frames (lagged).
         // wayvnc's cursor_sc path captures cursor shapes separately and sends them via
         // RFB encoding -239 (CursorImage), which noVNC renders client-side at pointer
-        // rate — zero lag. seat * hide_cursor 1 keeps the cursor out of video frames.
+        // rate - zero lag. seat * hide_cursor 1 keeps the cursor out of video frames.
         const wayvnc = spawn("wayvnc", [
             "-o", outputName,
             "-f", "60",
-            "-S", `/tmp/wayvnc-ctl-${vncPort}`,  // unique ctl socket per instance — avoids "already running" error
+            "-S", `/tmp/wayvnc-ctl-${vncPort}`,  // unique ctl socket per instance - avoids "already running" error
             "0.0.0.0", String(vncPort),
         ], { stdio: ["ignore", "pipe", "pipe"] });
 
@@ -569,7 +569,7 @@ export class SwaySession implements vscode.Disposable {
         }
 
         if (wayvnc.exitCode !== null) {
-            this.log.warn(`wayvnc already exited during stream start — skipping panel`);
+            this.log.warn(`wayvnc already exited during stream start - skipping panel`);
             websockify.kill("SIGTERM");
             return;
         }
@@ -617,7 +617,7 @@ export class SwaySession implements vscode.Disposable {
         this.cleanupWindow(conId, state);
     }
 
-    /** Handle move/resize events — re-sync output to window size for all windows. */
+    /** Handle move/resize events - re-sync output to window size for all windows. */
     private handleWindowGeometryChange(container: SwayNode): void {
         const conId = container.id;
         const state = this.windows.get(conId);
@@ -662,7 +662,7 @@ export class SwaySession implements vscode.Disposable {
         const pending = this.pendingWindows.get(conId);
         if (pending) {
             // Panel → output (only Sway lever) → window fills if resizable.
-            // Check window actual size before starting stream — swaymsg is synchronous so
+            // Check window actual size before starting stream - swaymsg is synchronous so
             // the window has already settled. If it didn't fill, correct output first so
             // wayvnc starts exactly once at the right size (output = window always).
             this.pendingWindows.delete(conId);
@@ -692,15 +692,15 @@ export class SwaySession implements vscode.Disposable {
 
         const state = this.windows.get(conId);
         if (!state) return;
-        // Non-resizable windows keep their natural size — ignore resize requests.
+        // Non-resizable windows keep their natural size - ignore resize requests.
         if (this.nonResizable.has(conId)) return;
-        // Skip if dimensions unchanged — avoids restart loop when noVNC re-sends size on connect.
+        // Skip if dimensions unchanged - avoids restart loop when noVNC re-sends size on connect.
         if (state.width === width && state.height === height) return;
         this.log.info(`Resize: con_id=${conId} output=${state.outputName} → ${width}x${height}`);
         state.width = width;
         state.height = height;
 
-        // Just resize the output — neatvnc 0.9.x sends RFB DesktopSize (encoding -308)
+        // Just resize the output - neatvnc 0.9.x sends RFB DesktopSize (encoding -308)
         // on output mode changes, so noVNC adapts without a reconnect.
         await run(`swaymsg output ${state.outputName} mode ${width}x${height}`);
         await this.logOutputInfo(state.outputName);
@@ -773,7 +773,7 @@ export class SwaySession implements vscode.Disposable {
             if (!node) return null;
             // window_rect is the actual surface committed by the client within the container.
             // rect is the container size (= output size for tiled windows).
-            // Prefer window_rect — catches dialogs that commit a smaller buffer than their container.
+            // Prefer window_rect - catches dialogs that commit a smaller buffer than their container.
             const wr = node.window_rect;
             const w = (wr && wr.width > 0) ? wr.width : node.rect?.width;
             const h = (wr && wr.height > 0) ? wr.height : node.rect?.height;
