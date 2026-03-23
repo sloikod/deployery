@@ -8,7 +8,7 @@ COPY packages ./packages
 COPY docker ./docker
 COPY scripts ./scripts
 
-RUN corepack enable && pnpm install --no-frozen-lockfile
+RUN corepack enable && pnpm install --frozen-lockfile
 RUN pnpm run build
 RUN pnpm --filter deployery-extension-desktop run bundle-novnc
 RUN pnpm --filter deployery-extension-desktop run package
@@ -36,10 +36,10 @@ RUN mkdir -p /etc/apt/keyrings \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-RUN debootstrap --variant=minbase --components=main,universe questing /opt/deployery/base-rootfs http://archive.ubuntu.com/ubuntu/ \
-    && printf "deb http://archive.ubuntu.com/ubuntu questing main universe\n\
-deb http://archive.ubuntu.com/ubuntu questing-updates main universe\n\
-deb http://security.ubuntu.com/ubuntu questing-security main universe\n" > /opt/deployery/base-rootfs/etc/apt/sources.list \
+RUN debootstrap --variant=minbase --components=main,universe noble /opt/deployery/base-rootfs http://archive.ubuntu.com/ubuntu/ \
+    && printf "deb http://archive.ubuntu.com/ubuntu noble main universe\n\
+deb http://archive.ubuntu.com/ubuntu noble-updates main universe\n\
+deb http://security.ubuntu.com/ubuntu noble-security main universe\n" > /opt/deployery/base-rootfs/etc/apt/sources.list \
     && chroot /opt/deployery/base-rootfs /bin/bash -lc "apt-get update && apt-get install -y --no-install-recommends \
         sudo curl ca-certificates git gnupg python3 python3-pip nodejs npm dbus-user-session \
         pulseaudio python3-websockify sway wayvnc xwayland xdg-utils ripgrep fd-find fzf less jq unzip procps locales \

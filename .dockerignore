@@ -1,0 +1,13 @@
+.git
+.github
+.turbo
+.pnpm-store
+node_modules
+**/node_modules
+dist
+**/dist
+coverage
+**/coverage
+*.log
+*.tsbuildinfo
+deployery.sqlite

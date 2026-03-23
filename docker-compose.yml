@@ -36,7 +36,15 @@ services:
       - "127.0.0.1:3131:3131"
     environment:
       DEPLOYERY_BASE_URL: http://localhost:3131
-      DEPLOYERY_SQLITE_PATH: /var/lib/deployery/data/deployery.sqlite
+      DB_TYPE: ${DB_TYPE:-sqlite}
+      DB_SQLITE_PATH: ${DB_SQLITE_PATH:-/var/lib/deployery/data/deployery.sqlite}
+      DB_POSTGRESDB_CONNECTION_URL: ${DB_POSTGRESDB_CONNECTION_URL:-}
+      DB_POSTGRESDB_HOST: ${DB_POSTGRESDB_HOST:-}
+      DB_POSTGRESDB_PORT: ${DB_POSTGRESDB_PORT:-}
+      DB_POSTGRESDB_DATABASE: ${DB_POSTGRESDB_DATABASE:-}
+      DB_POSTGRESDB_USER: ${DB_POSTGRESDB_USER:-}
+      DB_POSTGRESDB_PASSWORD: ${DB_POSTGRESDB_PASSWORD:-}
+      DB_POSTGRESDB_SSL_ENABLED: ${DB_POSTGRESDB_SSL_ENABLED:-false}
       DEPLOYERY_SANDBOX_ROOTFS: /var/lib/deployery/sandbox-rootfs
       DEPLOYERY_CODE_SERVER_PORT: "13337"
     volumes:
