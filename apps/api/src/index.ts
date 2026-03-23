@@ -6,12 +6,15 @@ import path from "path";
 import httpProxy from "http-proxy";
 import { collectDefaultMetrics, Counter, Registry } from "prom-client";
 
+import { loadPersistenceOptionsFromEnv } from "@deployery/persistence";
 import { WorkflowEngine } from "@deployery/workflow-engine";
 
 interface JsonResponse {
     statusCode?: number;
     body: unknown;
 }
+
+const VALID_WORKFLOW_NAME = /^[a-z][a-z0-9-]*$/;
 
 function getEnv(name: string, fallback?: string): string {
     const value = process.env[name] ?? fallback;
@@ -78,13 +81,16 @@ async function main(): Promise<void> {
     const codeServerPort = Number.parseInt(getEnv("DEPLOYERY_CODE_SERVER_PORT", "13337"), 10);
     const sandboxRootfsPath = getEnv("DEPLOYERY_SANDBOX_ROOTFS", "/var/lib/deployery/sandbox-rootfs");
     const sandboxHomePath = getEnv("DEPLOYERY_SANDBOX_HOME", "/home/deployery");
-    const sqlitePath = getEnv("DEPLOYERY_SQLITE_PATH", "/var/lib/deployery/data/deployery.sqlite");
+    const sqlitePath = process.env.DB_SQLITE_PATH ?? getEnv("DEPLOYERY_SQLITE_PATH", "/var/lib/deployery/data/deployery.sqlite");
+    const persistence = loadPersistenceOptionsFromEnv(sqlitePath);
     const baseUrl = process.env.DEPLOYERY_BASE_URL;
 
-    fs.mkdirSync(path.dirname(sqlitePath), { recursive: true });
+    if (persistence.type === "sqlite") {
+        fs.mkdirSync(path.dirname(persistence.sqlitePath ?? sqlitePath), { recursive: true });
+    }
 
     const engine = new WorkflowEngine({
-        sqlitePath,
+        persistence,
         sandboxRootfsPath,
         sandboxHomePath,
         baseUrl,
@@ -101,6 +107,7 @@ async function main(): Promise<void> {
         },
     });
     await engine.start();
+    let engineReady = true;
 
     const metricsRegistry = new Registry();
     collectDefaultMetrics({ register: metricsRegistry });
@@ -154,7 +161,7 @@ async function main(): Promise<void> {
             }
 
             if (method === "GET" && pathname === "/healthz/readiness") {
-                const ready = fs.existsSync(sandboxRootfsPath) && fs.existsSync(sqlitePath);
+                const ready = fs.existsSync(sandboxRootfsPath) && engineReady;
                 sendJson(response, {
                     statusCode: ready ? 200 : 503,
                     body: {
@@ -174,10 +181,10 @@ async function main(): Promise<void> {
 
             const isApiRoute = pathname.startsWith("/api/");
             if (isApiRoute) {
-                const apiKeyCount = engine.store.asyncKeyCount();
+                const apiKeyCount = await engine.store.asyncKeyCount();
                 if (apiKeyCount > 0) {
                     const apiKey = extractApiKey(request);
-                    if (!apiKey || !engine.store.verifyApiKey(apiKey)) {
+                    if (!apiKey || !(await engine.store.verifyApiKey(apiKey))) {
                         sendJson(response, {
                             statusCode: 401,
                             body: {
@@ -192,7 +199,7 @@ async function main(): Promise<void> {
 
             if (method === "GET" && pathname === "/api/v1/workflows") {
                 sendJson(response, {
-                    body: engine.listWorkflows(),
+                    body: await engine.listWorkflows(),
                 });
                 finish("/api/v1/workflows", 200);
                 return;
@@ -212,7 +219,18 @@ async function main(): Promise<void> {
                     return;
                 }
 
-                const workflow = engine.saveWorkflow(payload.name, payload.manifest);
+                if (!VALID_WORKFLOW_NAME.test(payload.name)) {
+                    sendJson(response, {
+                        statusCode: 400,
+                        body: {
+                            error: "workflow name must match /^[a-z][a-z0-9-]*$/",
+                        },
+                    });
+                    finish("/api/v1/workflows", 400);
+                    return;
+                }
+
+                const workflow = await engine.saveWorkflow(payload.name, payload.manifest);
                 sendJson(response, {
                     statusCode: 201,
                     body: workflow,
@@ -223,7 +241,7 @@ async function main(): Promise<void> {
 
             const workflowIdMatch = pathname.match(/^\/api\/v1\/workflows\/([^/]+)$/);
             if (method === "GET" && workflowIdMatch) {
-                const workflow = engine.getWorkflow(workflowIdMatch[1]);
+                const workflow = await engine.getWorkflow(workflowIdMatch[1]);
                 if (!workflow) {
                     sendJson(response, {
                         statusCode: 404,
@@ -264,7 +282,7 @@ async function main(): Promise<void> {
             if (method === "GET" && runsMatch) {
                 const limit = requestUrl.searchParams.get("limit");
                 const status = requestUrl.searchParams.get("status");
-                const runs = engine.listRuns(
+                const runs = await engine.listRuns(
                     runsMatch[1],
                     limit ? Number.parseInt(limit, 10) : undefined,
                     (status as never) ?? undefined
@@ -278,7 +296,7 @@ async function main(): Promise<void> {
 
             const workflowRunMatch = pathname.match(/^\/api\/v1\/workflows\/([^/]+)\/runs\/([^/]+)$/);
             if (method === "GET" && workflowRunMatch) {
-                const run = engine.getRun(workflowRunMatch[2]);
+                const run = await engine.getRun(workflowRunMatch[2]);
                 if (!run || run.workflowId !== workflowRunMatch[1]) {
                     sendJson(response, {
                         statusCode: 404,
@@ -299,7 +317,7 @@ async function main(): Promise<void> {
 
             const runByIdMatch = pathname.match(/^\/api\/v1\/workflows\/runs\/([^/]+)$/);
             if (method === "GET" && runByIdMatch) {
-                const run = engine.getRun(runByIdMatch[1]);
+                const run = await engine.getRun(runByIdMatch[1]);
                 if (!run) {
                     sendJson(response, {
                         statusCode: 404,
@@ -320,7 +338,7 @@ async function main(): Promise<void> {
 
             const logsMatch = pathname.match(/^\/api\/v1\/workflows\/([^/]+)\/runs\/([^/]+)\/logs$/);
             if (method === "GET" && logsMatch) {
-                const run = engine.getRun(logsMatch[2]);
+                const run = await engine.getRun(logsMatch[2]);
                 if (!run || run.workflowId !== logsMatch[1]) {
                     sendJson(response, {
                         statusCode: 404,
@@ -333,7 +351,7 @@ async function main(): Promise<void> {
                 }
 
                 const after = requestUrl.searchParams.get("after");
-                const logs = engine.listRunLogs(logsMatch[2], after ? Number.parseInt(after, 10) : undefined);
+                const logs = await engine.listRunLogs(logsMatch[2], after ? Number.parseInt(after, 10) : undefined);
                 sendJson(response, {
                     body: logs,
                 });
@@ -343,7 +361,7 @@ async function main(): Promise<void> {
 
             const cancelMatch = pathname.match(/^\/api\/v1\/workflows\/([^/]+)\/runs\/([^/]+)\/cancel$/);
             if (method === "POST" && cancelMatch) {
-                const run = engine.getRun(cancelMatch[2]);
+                const run = await engine.getRun(cancelMatch[2]);
                 if (!run || run.workflowId !== cancelMatch[1]) {
                     sendJson(response, {
                         statusCode: 404,
@@ -365,7 +383,7 @@ async function main(): Promise<void> {
 
             const webhookUrlsMatch = pathname.match(/^\/api\/v1\/workflows\/([^/]+)\/webhook-urls$/);
             if (method === "GET" && webhookUrlsMatch) {
-                const urls = engine.getWebhookUrls(webhookUrlsMatch[1], getRequestOrigin(request));
+                const urls = await engine.getWebhookUrls(webhookUrlsMatch[1], getRequestOrigin(request));
                 sendJson(response, {
                     body: urls,
                 });
@@ -432,9 +450,17 @@ async function main(): Promise<void> {
     });
 
     const shutdown = () => {
+        engineReady = false;
         server.close(() => {
-            engine.stop();
-            process.exit(0);
+            void engine
+                .stop()
+                .then(() => {
+                    process.exit(0);
+                })
+                .catch((error) => {
+                    console.error(error instanceof Error ? error.message : String(error));
+                    process.exit(1);
+                });
         });
     };
 

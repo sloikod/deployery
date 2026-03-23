@@ -181,7 +181,8 @@ export function safeParseWorkflowManifest(input: unknown) {
 }
 
 export function stripWorkflowSchema(manifest: WorkflowManifest): Omit<WorkflowManifest, "$schema"> {
-    const { $schema: _schema, ...rest } = manifest;
+    const { $schema, ...rest } = manifest;
+    void $schema;
     return rest;
 }
 
