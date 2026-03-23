@@ -10,7 +10,7 @@ The current design is:
 - one public HTTP port
 - one persistent sandbox filesystem
 - one API app
-- one SQLite database
+- one database connection
 
 ## Runtime Shape
 
@@ -24,8 +24,9 @@ The main pieces are:
 - `code-server`
   - runs inside the sandbox root filesystem
   - is exposed through the API proxy on the public port
-- SQLite via Drizzle
-  - stores workflow and runtime state
+- persistence via Drizzle schemas
+  - SQLite by default
+  - optional PostgreSQL for externalized state
 - persistent sandbox rootfs
   - stored under `/var/lib/deployery/sandbox-rootfs`
   - intended to behave like a full Linux environment for the user

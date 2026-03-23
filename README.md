@@ -7,16 +7,17 @@ and persists a full Linux sandbox filesystem across restarts.
 
 Basic project documentation lives in `./docs`:
 
-- `docs/README.md`
 - `docs/getting-started.md`
 - `docs/architecture.md`
 - `docs/commands.md`
+- `docs/self-hosting.md`
+- `docs/variables.md`
 
 ## Workspace Layout
 
 ```text
 apps/api                  HTTP API, workflow host, and code-server front proxy
-packages/persistence      Drizzle schema and SQLite access
+packages/persistence      Drizzle schema and persistence adapters
 packages/workflow-engine  Workflow scheduling and execution primitives
 packages/workflow-schema  Shared manifest types and validation
 packages/cli              Deployery workflow CLI
@@ -41,7 +42,7 @@ The container initializes a persistent sandbox root filesystem at
 ## Current Scope
 
 - Full repo skeleton and package wiring
-- SQLite persistence via Drizzle
+- SQLite by default, optional PostgreSQL
 - API and CLI scaffolding
 - Docker and sandbox rootfs bootstrap
 - Preserved desktop assets and extension runtime support

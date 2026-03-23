@@ -60,4 +60,4 @@ docker compose down -v
 ```
 
 Be careful with `down -v`. It removes the persistent Docker volume, including
-the sandbox filesystem and SQLite state.
+the sandbox filesystem and default SQLite state.
