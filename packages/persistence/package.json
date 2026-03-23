@@ -16,10 +16,12 @@
   "dependencies": {
     "@deployery/workflow-schema": "workspace:*",
     "better-sqlite3": "^12.4.1",
-    "drizzle-orm": "^0.44.7"
+    "drizzle-orm": "^0.44.7",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
+    "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.6",
     "typescript": "5.9.2",
     "vitest": "^4.0.18"
