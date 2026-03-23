@@ -343,25 +343,32 @@ async function listRuns(name?: string) {
 }
 
 async function logs(runId: string, follow: boolean) {
+    let after: number | undefined;
+
     while (true) {
         const run = await apiFetch<StoredRun>(`/api/v1/workflows/runs/${runId}`);
-        const logRows = await apiFetch<Array<{ stream: string; chunk: string }>>(
-            `/api/v1/workflows/${run.workflowId}/runs/${runId}/logs`
+        const query = after !== undefined ? `?after=${after}` : "";
+        const logRows = await apiFetch<Array<{ stream: string; chunk: string; createdAt: number }>>(
+            `/api/v1/workflows/${run.workflowId}/runs/${runId}/logs${query}`
         );
 
-        run.stepRuns.forEach((step, index) => {
-            const duration =
-                step.startedAt && step.finishedAt ? ` (${formatDuration(step.finishedAt - step.startedAt)})` : "";
-            console.log(`[${index + 1}/${run.stepRuns.length}] ${step.name} ${step.status}${duration}`);
-            if (step.status === "failed" && step.error) {
-                console.log(`    error: ${step.error}`);
-            }
-        });
-        console.log("");
+        if (after === undefined) {
+            run.stepRuns.forEach((step, index) => {
+                const duration =
+                    step.startedAt && step.finishedAt ? ` (${formatDuration(step.finishedAt - step.startedAt)})` : "";
+                console.log(`[${index + 1}/${run.stepRuns.length}] ${step.name} ${step.status}${duration}`);
+                if (step.status === "failed" && step.error) {
+                    console.log(`    error: ${step.error}`);
+                }
+            });
+            console.log("");
+        }
+
         logRows.forEach((log) => {
             const prefix = log.stream === "stderr" ? "! " : "> ";
             console.log(`${prefix}${log.chunk}`);
         });
+        after = logRows.at(-1)?.createdAt ?? after;
 
         if (!follow || ["completed", "failed", "cancelled"].includes(run.status)) {
             return;
