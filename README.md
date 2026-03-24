@@ -1,7 +1,8 @@
 # Deployery
 
 Deployery is a self-hosted sandbox runtime that boots directly into `code-server`
-and persists a full Linux sandbox filesystem across restarts.
+and persists a Linux working environment, including user-installed system
+packages, across restarts.
 
 ## Docs
 
@@ -33,18 +34,31 @@ pnpm build
 pnpm dev
 ```
 
-The container initializes a persistent sandbox root filesystem at
-`/var/lib/deployery/sandbox-rootfs` and serves:
+The sandbox persists key system paths directly (`/usr`, `/etc`, `/var`, `/opt`,
+and `/home/user`) and serves:
 
 - `http://localhost:3131/` -> `code-server`
 - `http://localhost:3131/api/*` -> Deployery API
+
+The default plain-Docker profile is:
+
+```bash
+docker compose up -d --build
+```
+
+For stronger host isolation on supported Linux hosts, use the same Compose file
+with `runsc`:
+
+```bash
+DEPLOYERY_SANDBOX_RUNTIME=runsc DEPLOYERY_SANDBOX_ISOLATION_MODE=hardened-runsc docker compose up -d --build
+```
 
 ## Current Scope
 
 - Full repo skeleton and package wiring
 - SQLite by default, optional PostgreSQL
 - API and CLI scaffolding
-- Docker and sandbox rootfs bootstrap
+- Docker and persistent system-path bootstrap
 - Preserved desktop assets and extension runtime support
 
 The workflow engine foundation is in place, but deeper production execution

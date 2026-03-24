@@ -3,39 +3,53 @@ set -euo pipefail
 
 export DEPLOYERY_BASE_URL="${DEPLOYERY_BASE_URL:-http://localhost:3131}"
 export DEPLOYERY_SQLITE_PATH="${DEPLOYERY_SQLITE_PATH:-/var/lib/deployery/data/deployery.sqlite}"
-export DEPLOYERY_SANDBOX_ROOTFS="${DEPLOYERY_SANDBOX_ROOTFS:-/var/lib/deployery/sandbox-rootfs}"
+export DEPLOYERY_SANDBOX_ROOTFS="${DEPLOYERY_SANDBOX_ROOTFS:-/}"
 export DEPLOYERY_SANDBOX_HOME="${DEPLOYERY_SANDBOX_HOME:-/home/user}"
 export DEPLOYERY_CODE_SERVER_PORT="${DEPLOYERY_CODE_SERVER_PORT:-13337}"
+export DEPLOYERY_SANDBOX_ISOLATION_MODE="${DEPLOYERY_SANDBOX_ISOLATION_MODE:-compatibility}"
+export DEPLOYERY_SANDBOX_RUNTIME="${DEPLOYERY_SANDBOX_RUNTIME:-docker}"
 export PORT="${PORT:-3131}"
 
-ROOTFS_TEMPLATE="/opt/deployery/base-rootfs"
-ROOTFS_MARKER="${DEPLOYERY_SANDBOX_ROOTFS}/.deployery-rootfs-initialized"
+LEGACY_ROOTFS="/var/lib/deployery/sandbox-rootfs"
+FLATTENED_MIGRATION_MARKER="/var/lib/deployery/.flattened-rootfs-migrated"
 
-mkdir -p /var/lib/deployery/data
-mkdir -p "${DEPLOYERY_SANDBOX_ROOTFS}"
+log_runtime_summary() {
+  echo "Deployery sandbox runtime:"
+  echo "  isolation mode: ${DEPLOYERY_SANDBOX_ISOLATION_MODE}"
+  echo "  requested runtime: ${DEPLOYERY_SANDBOX_RUNTIME}"
+  echo "  persistent rootfs: ${DEPLOYERY_SANDBOX_ROOTFS}"
+  echo "  sandbox home: ${DEPLOYERY_SANDBOX_HOME}"
+}
 
-if [ ! -f "${ROOTFS_MARKER}" ]; then
-  rsync -a --delete "${ROOTFS_TEMPLATE}/" "${DEPLOYERY_SANDBOX_ROOTFS}/"
-  touch "${ROOTFS_MARKER}"
-fi
+preflight_checks() {
+  if [ "${DEPLOYERY_SANDBOX_ISOLATION_MODE}" = "hardened-runsc" ]; then
+    echo "Deployery hardened mode requested. Ensure Docker is configured with the runsc runtime." >&2
+  fi
+}
 
-mount_bind() {
-  local source="$1"
-  local target="$2"
-
-  mkdir -p "${target}"
-  if mountpoint -q "${target}"; then
+migrate_legacy_rootfs() {
+  if [ -f "${FLATTENED_MIGRATION_MARKER}" ] || [ ! -d "${LEGACY_ROOTFS}" ]; then
     return
   fi
 
-  mount --rbind "${source}" "${target}"
+  if [ ! -d "${LEGACY_ROOTFS}/usr" ]; then
+    return
+  fi
+
+  echo "Migrating legacy sandbox-rootfs into flattened persistent system volumes..."
+  rsync -a "${LEGACY_ROOTFS}/usr/" /usr/
+  rsync -a "${LEGACY_ROOTFS}/etc/" /etc/
+  rsync -a "${LEGACY_ROOTFS}/opt/" /opt/
+  rsync -a "${LEGACY_ROOTFS}/home/user/" /home/user/
+  rsync -a --exclude "lib/deployery/" "${LEGACY_ROOTFS}/var/" /var/
+  touch "${FLATTENED_MIGRATION_MARKER}"
 }
 
-mount_bind /dev "${DEPLOYERY_SANDBOX_ROOTFS}/dev"
-mount_bind /proc "${DEPLOYERY_SANDBOX_ROOTFS}/proc"
-mount_bind /sys "${DEPLOYERY_SANDBOX_ROOTFS}/sys"
-mount_bind /run "${DEPLOYERY_SANDBOX_ROOTFS}/run"
+preflight_checks
+log_runtime_summary
 
+mkdir -p /var/lib/deployery/data
+migrate_legacy_rootfs
 
 /deployery/install-managed-assets.sh
 /deployery/start-sway.sh &

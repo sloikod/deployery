@@ -22,14 +22,22 @@ The main pieces are:
   - health and metrics endpoints
   - reverse proxy to private `code-server`
 - `code-server`
-  - runs inside the sandbox root filesystem
+  - runs inside the sandbox container itself
   - is exposed through the API proxy on the public port
 - persistence via Drizzle schemas
   - SQLite by default
   - optional PostgreSQL for externalized state
-- persistent sandbox rootfs
-  - stored under `/var/lib/deployery/sandbox-rootfs`
-  - intended to behave like a full Linux environment for the user
+- persistent sandbox system paths
+  - `/usr`, `/etc`, `/var`, `/opt`, and `/home/user` are persisted directly
+  - this keeps user-installed packages, configs, desktop apps, and user state
+    across restarts
+  - transient runtime paths such as `/tmp` and `/run` stay ephemeral
+- outer sandbox container
+  - provides the isolation boundary around the persistent guest environment
+  - may run in compatibility mode (plain Docker) or hardened mode (`runsc`)
+  - should be treated as hostile code execution from the host's perspective
+  - in plain `runc` mode, Deployery uses an explicit desktop-friendly seccomp
+    posture so browser and Electron namespace sandboxes can still initialize
 
 ## Repo Layout
 
@@ -67,3 +75,21 @@ The product term in this repo is `sandbox`.
 
 That refers to the persistent Linux environment the user works inside, not the
 old E2B multi-sandbox control-plane model.
+
+## Security Model
+
+Deployery intentionally preserves a powerful guest environment:
+
+- the sandbox user can use `sudo`
+- packages, services, browsers, and desktop apps run inside the persistent
+  guest environment
+- the guest should be treated as untrusted
+
+The protection boundary is therefore outside the guest:
+
+- host protection comes from the outer container/runtime boundary
+- `runsc` is the recommended production runtime on supported hosts
+- plain `runc` mode prioritizes desktop compatibility over strict seccomp
+  filtering
+- persistent system paths keep installed software and configuration, while
+  compositor/runtime scratch state remains ephemeral

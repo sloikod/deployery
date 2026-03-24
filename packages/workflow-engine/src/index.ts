@@ -1,5 +1,5 @@
 import { createHmac, randomUUID } from "crypto";
-import { spawn } from "child_process";
+import { execFileSync, spawn } from "child_process";
 
 import { CronosExpression } from "cronosjs";
 
@@ -176,6 +176,8 @@ export class WorkflowEngine {
   private readonly logger: EngineLogger;
   private readonly sandboxRootfsPath: string;
   private readonly sandboxHomePath: string;
+  private readonly sandboxUid: number;
+  private readonly sandboxGid: number;
   private readonly shell: string;
   private readonly schedulerIntervalMs: number;
   private readonly baseUrl: string | undefined;
@@ -188,10 +190,31 @@ export class WorkflowEngine {
     );
     this.logger = options.logger ?? defaultLogger();
     this.sandboxRootfsPath = options.sandboxRootfsPath;
-    this.sandboxHomePath = options.sandboxHomePath ?? "/home/deployery";
+    this.sandboxHomePath = options.sandboxHomePath ?? "/home/user";
+    [this.sandboxUid, this.sandboxGid] = this.resolveSandboxIdentity();
     this.shell = options.shell ?? "/bin/bash";
     this.schedulerIntervalMs = options.schedulerIntervalMs ?? 1_000;
     this.baseUrl = options.baseUrl;
+  }
+
+  private resolveSandboxIdentity(): [number, number] {
+    const sandboxUser = process.env.DEPLOYERY_SANDBOX_USER ?? "user";
+    try {
+      const uid = Number.parseInt(
+        execFileSync("id", ["-u", sandboxUser], { encoding: "utf8" }).trim(),
+        10,
+      );
+      const gid = Number.parseInt(
+        execFileSync("id", ["-g", sandboxUser], { encoding: "utf8" }).trim(),
+        10,
+      );
+      if (Number.isFinite(uid) && Number.isFinite(gid)) {
+        return [uid, gid];
+      }
+    } catch {
+      // Fall back to the first non-system user UID/GID used by the image.
+    }
+    return [1000, 1000];
   }
 
   async start(): Promise<void> {
@@ -746,20 +769,14 @@ export class WorkflowEngine {
     const shell = step.shell ?? this.shell;
 
     return new Promise<JsonValue>((resolve, reject) => {
-      // entrypoint.sh already rbinds /dev /proc /sys /run into the sandbox
-      // rootfs, so a plain chroot is sufficient - no proot needed.
-      // The deployery user has passwordless sudo for commands requiring root.
       const child = spawn(
-        "chroot",
-        [
-          "--userspec=deployery:deployery",
-          this.sandboxRootfsPath,
-          shell,
-          "-lc",
-          `cd ${JSON.stringify(cwd)} && ${step.command}`,
-        ],
+        shell,
+        ["-lc", step.command],
         {
           env,
+          cwd,
+          uid: this.sandboxUid,
+          gid: this.sandboxGid,
         },
       );
 

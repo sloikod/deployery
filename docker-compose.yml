@@ -25,12 +25,13 @@ services:
     build:
       context: .
       dockerfile: docker/image/Dockerfile
-    # runtime: runsc  # Uncomment to enable gVisor on VPS hosts.
-    #                  # Install: https://gvisor.dev/docs/user_guide/install/
-    #                  # Requires --host-uds=all in /etc/docker/daemon.json runsc opts
-    #                  # for XWayland /tmp/.X11-unix socket access.
-    cap_add:
-      - SYS_ADMIN
+    runtime: ${DEPLOYERY_SANDBOX_RUNTIME:-runc}
+    shm_size: ${DEPLOYERY_SANDBOX_SHM_SIZE:-1gb}
+    security_opt:
+      - seccomp=${DEPLOYERY_SANDBOX_SECCOMP_PROFILE:-unconfined}
+    tmpfs:
+      - /tmp:rw,exec,nosuid,nodev,size=${DEPLOYERY_SANDBOX_TMP_SIZE:-1g}
+      - /run:rw,nosuid,nodev,size=${DEPLOYERY_SANDBOX_RUN_SIZE:-128m}
     ports:
       # Bound to 127.0.0.1 - only reachable from this machine, not the internet.
       # Caddy proxies external traffic through ports 80/443 above.
@@ -46,11 +47,24 @@ services:
       DB_POSTGRESDB_USER: ${DB_POSTGRESDB_USER:-}
       DB_POSTGRESDB_PASSWORD: ${DB_POSTGRESDB_PASSWORD:-}
       DB_POSTGRESDB_SSL_ENABLED: ${DB_POSTGRESDB_SSL_ENABLED:-false}
-      DEPLOYERY_SANDBOX_ROOTFS: /var/lib/deployery/sandbox-rootfs
+      DEPLOYERY_SANDBOX_ROOTFS: /
+      DEPLOYERY_SANDBOX_HOME: /home/user
       DEPLOYERY_CODE_SERVER_PORT: "13337"
+      DEPLOYERY_SANDBOX_ISOLATION_MODE: ${DEPLOYERY_SANDBOX_ISOLATION_MODE:-compatibility}
+      DEPLOYERY_SANDBOX_RUNTIME: ${DEPLOYERY_SANDBOX_RUNTIME:-runc}
     volumes:
+      - sandbox-usr:/usr
+      - sandbox-etc:/etc
+      - sandbox-var:/var
+      - sandbox-opt:/opt
+      - sandbox-home:/home/user
       - sandbox-data:/var/lib/deployery
 
 volumes:
   caddy_data:
+  sandbox-usr:
+  sandbox-etc:
+  sandbox-var:
+  sandbox-opt:
+  sandbox-home:
   sandbox-data:

@@ -1,23 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SANDBOX_ROOTFS="${DEPLOYERY_SANDBOX_ROOTFS:?DEPLOYERY_SANDBOX_ROOTFS is required}"
 SANDBOX_HOME="${DEPLOYERY_SANDBOX_HOME:-/home/user}"
 
-# Ensure /tmp exists and is world-writable - debootstrap --variant=minbase does not
-# guarantee this, and rsync preserves whatever permissions the template had.
-mkdir -p "${SANDBOX_ROOTFS}/tmp"
-chmod 1777 "${SANDBOX_ROOTFS}/tmp"
+mkdir -p /tmp /tmp/sway-runtime
+chmod 1777 /tmp
+rm -f /tmp/sway-config
 
-# A persisted rootfs can carry forward an old config file owned by a previous
-# sandbox user (for example, from before the user account name changed). Remove
-# it so startup does not depend on its existing permissions.
-rm -f "${SANDBOX_ROOTFS}/tmp/sway-config"
-
-# Write the Sway config into the chroot's /tmp before starting the compositor.
-# This mirrors what the VS Code extension writes at runtime (app-session.ts:SWAY_CONFIG),
-# so the extension's findExistingSwaySocket() reattach path works without a config reload.
-cat > "${SANDBOX_ROOTFS}/tmp/sway-config" <<'EOF'
+cat > /tmp/sway-config <<'EOF'
 xwayland enable
 default_border none
 default_floating_border none
@@ -33,13 +23,10 @@ output * scale 1
 seat * xcursor_theme transparent-cursor 24
 EOF
 
-chroot "${SANDBOX_ROOTFS}" chown user:user /tmp/sway-config
+chown user:user /tmp/sway-config /tmp/sway-runtime
+chmod 700 /tmp/sway-runtime
 
-# Ensure XDG_RUNTIME_DIR exists and is owned by user before Sway starts.
-chroot --userspec=user:user "${SANDBOX_ROOTFS}" \
-    /bin/bash -c "mkdir -p /tmp/sway-runtime && chmod 700 /tmp/sway-runtime"
-
-exec chroot --userspec=user:user "${SANDBOX_ROOTFS}" /usr/bin/env -i \
+exec /usr/bin/sudo -u user /usr/bin/env -i \
     HOME="${SANDBOX_HOME}" \
     USER="user" \
     LOGNAME="user" \

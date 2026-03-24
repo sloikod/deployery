@@ -14,6 +14,14 @@ interface JsonResponse {
   body: unknown;
 }
 
+interface SandboxRuntimeInfo {
+  isolationMode: string;
+  runtime: string;
+  rootfsPath: string;
+  homePath: string;
+  codeServerPort: number;
+}
+
 const VALID_WORKFLOW_NAME = /^[a-z][a-z0-9-]*$/;
 
 function getEnv(name: string, fallback?: string): string {
@@ -90,16 +98,25 @@ async function main(): Promise<void> {
     getEnv("DEPLOYERY_CODE_SERVER_PORT", "13337"),
     10,
   );
-  const sandboxRootfsPath = getEnv(
-    "DEPLOYERY_SANDBOX_ROOTFS",
-    "/var/lib/deployery/sandbox-rootfs",
+  const sandboxRootfsPath = getEnv("DEPLOYERY_SANDBOX_ROOTFS", "/");
+  const sandboxHomePath = getEnv("DEPLOYERY_SANDBOX_HOME", "/home/user");
+  const sandboxIsolationMode = getEnv(
+    "DEPLOYERY_SANDBOX_ISOLATION_MODE",
+    "compatibility",
   );
-  const sandboxHomePath = getEnv("DEPLOYERY_SANDBOX_HOME", "/home/deployery");
+  const sandboxRuntime = getEnv("DEPLOYERY_SANDBOX_RUNTIME", "docker");
   const sqlitePath =
     process.env.DB_SQLITE_PATH ??
     getEnv("DEPLOYERY_SQLITE_PATH", "/var/lib/deployery/data/deployery.sqlite");
   const persistence = loadPersistenceOptionsFromEnv(sqlitePath);
   const baseUrl = process.env.DEPLOYERY_BASE_URL;
+  const sandboxRuntimeInfo: SandboxRuntimeInfo = {
+    isolationMode: sandboxIsolationMode,
+    runtime: sandboxRuntime,
+    rootfsPath: sandboxRootfsPath,
+    homePath: sandboxHomePath,
+    codeServerPort,
+  };
 
   if (persistence.type === "sqlite") {
     fs.mkdirSync(path.dirname(persistence.sqlitePath ?? sqlitePath), {
@@ -126,6 +143,10 @@ async function main(): Promise<void> {
   });
   await engine.start();
   let engineReady = true;
+
+  console.log(
+    `Deployery sandbox runtime ready: mode=${sandboxRuntimeInfo.isolationMode} runtime=${sandboxRuntimeInfo.runtime} rootfs=${sandboxRuntimeInfo.rootfsPath}`,
+  );
 
   const metricsRegistry = new Registry();
   collectDefaultMetrics({ register: metricsRegistry });
@@ -172,6 +193,10 @@ async function main(): Promise<void> {
         sendJson(response, {
           body: {
             status: "ok",
+            sandbox: {
+              isolationMode: sandboxRuntimeInfo.isolationMode,
+              runtime: sandboxRuntimeInfo.runtime,
+            },
           },
         });
         finish("/healthz", 200);
@@ -184,9 +209,22 @@ async function main(): Promise<void> {
           statusCode: ready ? 200 : 503,
           body: {
             status: ready ? "ready" : "starting",
+            sandbox: {
+              isolationMode: sandboxRuntimeInfo.isolationMode,
+              runtime: sandboxRuntimeInfo.runtime,
+              rootfsPath: sandboxRuntimeInfo.rootfsPath,
+            },
           },
         });
         finish("/healthz/readiness", ready ? 200 : 503);
+        return;
+      }
+
+      if (method === "GET" && pathname === "/api/v1/runtime") {
+        sendJson(response, {
+          body: sandboxRuntimeInfo,
+        });
+        finish("/api/v1/runtime", 200);
         return;
       }
 

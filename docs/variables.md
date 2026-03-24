@@ -12,9 +12,15 @@
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DEPLOYERY_SANDBOX_ROOTFS` | `/var/lib/deployery/sandbox-rootfs` | Persistent root filesystem path for the sandbox. |
-| `DEPLOYERY_SANDBOX_HOME` | `/home/deployery` | Home directory for the sandbox user. |
+| `DEPLOYERY_SANDBOX_ROOTFS` | `/` | Guest root path used by runtime diagnostics. |
+| `DEPLOYERY_SANDBOX_HOME` | `/home/user` | Home directory for the sandbox user. |
 | `DEPLOYERY_CODE_SERVER_PORT` | `13337` | Internal `code-server` bind port. |
+| `DEPLOYERY_SANDBOX_ISOLATION_MODE` | `compatibility` | Operator-visible deployment profile, for example `compatibility` or `hardened-runsc`. |
+| `DEPLOYERY_SANDBOX_RUNTIME` | `runc` | Container runtime name used by Docker, for example `runc` or `runsc`. |
+| `DEPLOYERY_SANDBOX_SECCOMP_PROFILE` | `unconfined` | Seccomp profile applied to the sandbox container. `unconfined` is the desktop-friendly default for plain Docker. |
+| `DEPLOYERY_SANDBOX_SHM_SIZE` | `1gb` | Shared memory size for the outer sandbox container. |
+| `DEPLOYERY_SANDBOX_TMP_SIZE` | `1g` | `tmpfs` size for the outer sandbox container `/tmp`. |
+| `DEPLOYERY_SANDBOX_RUN_SIZE` | `128m` | `tmpfs` size for the outer sandbox container `/run`. |
 
 ## Database selection
 

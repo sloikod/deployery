@@ -19,7 +19,7 @@ function silentLogger() {
 function createEngine() {
   return new WorkflowEngine({
     sandboxRootfsPath: "/sandbox",
-    sandboxHomePath: "/home/deployery",
+    sandboxHomePath: "/home/user",
     persistence: { type: "sqlite", sqlitePath: ":memory:" },
     logger: silentLogger(),
     baseUrl: "https://deployery.example.com",
@@ -137,17 +137,14 @@ describe("WorkflowEngine runtime behavior", () => {
       exit_code: 0,
     });
     expect(mockedSpawn).toHaveBeenCalledTimes(1);
-    expect(mockedSpawn.mock.calls[0]?.[0]).toBe("chroot");
-    expect(mockedSpawn.mock.calls[0]?.[1]).toEqual([
-      "--userspec=deployery:deployery",
-      "/sandbox",
-      "/bin/sh",
-      "-lc",
-      'cd "/workspace" && printf hi',
-    ]);
+    expect(mockedSpawn.mock.calls[0]?.[0]).toBe("/bin/sh");
+    expect(mockedSpawn.mock.calls[0]?.[1]).toEqual(["-lc", "printf hi"]);
     expect(mockedSpawn.mock.calls[0]?.[2]).toMatchObject({
+      cwd: "/workspace",
+      uid: expect.any(Number),
+      gid: expect.any(Number),
       env: expect.objectContaining({
-        HOME: "/home/deployery",
+        HOME: "/home/user",
         INPUT: '{"value":1}',
         DEPLOYERY_WORKFLOW_ID: workflow.id,
       }),

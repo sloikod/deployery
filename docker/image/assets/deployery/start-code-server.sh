@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SANDBOX_ROOTFS="${DEPLOYERY_SANDBOX_ROOTFS:?DEPLOYERY_SANDBOX_ROOTFS is required}"
 SANDBOX_HOME="${DEPLOYERY_SANDBOX_HOME:-/home/user}"
 CODE_SERVER_PORT="${DEPLOYERY_CODE_SERVER_PORT:-13337}"
 EXTRA_ARGS=("$@")
@@ -15,7 +14,7 @@ CODE_SERVER_CMD=(
   --bind-addr "127.0.0.1:${CODE_SERVER_PORT}"
   --auth none
   --app-name "Deployery"
-  --i18n /opt/deployery/code-server-branding/deployery-i18n.json
+  --i18n /deployery/code-server-branding/deployery-i18n.json
   --disable-getting-started-override
   --disable-telemetry
   --disable-update-check
@@ -23,7 +22,7 @@ CODE_SERVER_CMD=(
 )
 printf -v CODE_SERVER_CMD_STR '%q ' "${CODE_SERVER_CMD[@]}"
 
-exec chroot --userspec=user:user "${SANDBOX_ROOTFS}" /usr/bin/env -i \
+exec /usr/bin/sudo -u user /usr/bin/env -i \
   HOME="${SANDBOX_HOME}" \
   USER="user" \
   LOGNAME="user" \

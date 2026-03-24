@@ -1,0 +1,8 @@
+name: deployery
+
+services:
+  sandbox:
+    runtime: runsc
+    environment:
+      DEPLOYERY_SANDBOX_ISOLATION_MODE: hardened-runsc
+      DEPLOYERY_SANDBOX_RUNTIME: runsc

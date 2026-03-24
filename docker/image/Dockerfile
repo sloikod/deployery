@@ -16,6 +16,9 @@ RUN pnpm --filter deployery-extension-desktop run package
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ARG WAYVNC_VERSION=v0.9.1
+ARG NEATVNC_VERSION=v0.9.1
+ARG AML_VERSION=v0.3.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -25,42 +28,85 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     sudo \
     tini \
-    debootstrap \
     xz-utils \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /etc/apt/keyrings/google-linux.gpg \
     && printf "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main\n" > /etc/apt/sources.list.d/nodesource.list \
+    && printf "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-linux.gpg] https://dl.google.com/linux/chrome/deb/ stable main\n" > /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
-    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get install -y --no-install-recommends \
+        nodejs \
+        dbus-user-session \
+        pulseaudio \
+        python3-websockify \
+        sway \
+        xwayland \
+        xdg-utils \
+        ripgrep \
+        fd-find \
+        fzf \
+        less \
+        jq \
+        unzip \
+        procps \
+        locales \
+        google-chrome-stable \
+        build-essential \
+        meson \
+        ninja-build \
+        pkg-config \
+        scdoc \
+        libdrm-dev \
+        libxkbcommon-dev \
+        libwlroots-dev \
+        libjansson-dev \
+        libpam0g-dev \
+        libgnutls28-dev \
+        libavfilter-dev \
+        libavcodec-dev \
+        libavutil-dev \
+        libturbojpeg0-dev \
+        libpixman-1-dev \
+        libgbm-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN debootstrap --variant=minbase --components=main,universe noble /opt/deployery/base-rootfs http://archive.ubuntu.com/ubuntu/ \
-    && printf "deb http://archive.ubuntu.com/ubuntu noble main universe\n\
-deb http://archive.ubuntu.com/ubuntu noble-updates main universe\n\
-deb http://security.ubuntu.com/ubuntu noble-security main universe\n" > /opt/deployery/base-rootfs/etc/apt/sources.list \
-    && chroot /opt/deployery/base-rootfs /bin/bash -lc "apt-get update && apt-get install -y --no-install-recommends \
-        sudo curl ca-certificates git gnupg python3 python3-pip nodejs npm dbus-user-session \
-        pulseaudio python3-websockify sway wayvnc xwayland xdg-utils ripgrep fd-find fzf less jq unzip procps locales \
-      && rm -rf /var/lib/apt/lists/*" \
-    && install -d -m 0755 /opt/deployery/base-rootfs/etc/apt/keyrings \
-    && curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /opt/deployery/base-rootfs/etc/apt/keyrings/google-linux.gpg \
-    && printf "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-linux.gpg] https://dl.google.com/linux/chrome/deb/ stable main\n" > /opt/deployery/base-rootfs/etc/apt/sources.list.d/google-chrome.list \
-    && chroot /opt/deployery/base-rootfs /bin/bash -lc "apt-get update && apt-get install -y --no-install-recommends google-chrome-stable && rm -rf /var/lib/apt/lists/*" \
-    && chroot /opt/deployery/base-rootfs /bin/bash -lc "curl -fsSL https://code-server.dev/install.sh | sh" \
-    && chroot /opt/deployery/base-rootfs /bin/bash -lc "useradd -m -s /bin/bash user && echo 'user ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/user" \
-    && chroot /opt/deployery/base-rootfs /bin/bash -lc "ln -sf /usr/bin/fdfind /usr/local/bin/fd" \
-    && chroot /opt/deployery/base-rootfs /bin/bash -lc "ln -sf /usr/bin/google-chrome-stable /usr/local/bin/google-chrome" \
-    && chroot /opt/deployery/base-rootfs /bin/bash -lc "locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8"
+RUN bash -lc "set -euo pipefail \
+    && mkdir -p /tmp/build-wayvnc \
+    && cd /tmp/build-wayvnc \
+    && git clone --branch ${WAYVNC_VERSION} --depth 1 https://github.com/any1/wayvnc.git \
+    && git clone --branch ${NEATVNC_VERSION} --depth 1 https://github.com/any1/neatvnc.git \
+    && git clone --branch ${AML_VERSION} --depth 1 https://github.com/any1/aml.git \
+    && mkdir -p wayvnc/subprojects neatvnc/subprojects \
+    && ln -sf ../../neatvnc wayvnc/subprojects/neatvnc \
+    && ln -sf ../../aml wayvnc/subprojects/aml \
+    && ln -sf ../../aml neatvnc/subprojects/aml \
+    && cd wayvnc \
+    && meson setup build --buildtype=release \
+    && meson compile -C build \
+    && meson install -C build \
+    && ldconfig \
+    && rm -rf /tmp/build-wayvnc"
+
+RUN curl -fsSL https://code-server.dev/install.sh | sh \
+    && useradd -m -s /bin/bash user \
+    && echo 'user ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/user \
+    && chmod 0440 /etc/sudoers.d/user \
+    && ln -sf /usr/bin/fdfind /usr/local/bin/fd \
+    && ln -sf /usr/bin/google-chrome-stable /usr/local/bin/google-chrome \
+    && locale-gen en_US.UTF-8 \
+    && update-locale LANG=en_US.UTF-8
 
 WORKDIR /deployery
 
 COPY --from=builder /workspace /deployery
-COPY --from=builder /workspace/packages/extension-desktop/deployery-extension-desktop.vsix /opt/deployery/extensions/deployery-extension-desktop.vsix
-COPY docker/image/assets/Desktop /opt/deployery/managed-assets/Desktop
-COPY docker/image/assets/code-server /opt/deployery/managed-assets/code-server
-COPY docker/image/assets/code-server/branding /opt/deployery/code-server-branding
+COPY --from=builder /workspace/packages/extension-desktop/deployery-extension-desktop.vsix /deployery/extensions/deployery-extension-desktop.vsix
+COPY docker/image/assets/Desktop /deployery/managed-assets/Desktop
+COPY docker/image/assets/code-server /deployery/managed-assets/code-server
+COPY docker/image/assets/code-server/branding /deployery/code-server-branding
 COPY docker/image/assets/deployery/wayland-env.sh /deployery/wayland-env.sh
 COPY docker/image/assets/deployery/virtual-pointer.py /deployery/virtual-pointer.py
 COPY docker/image/assets/deployery/fonts-local.conf /deployery/fonts-local.conf
@@ -70,8 +116,12 @@ COPY docker/image/assets/deployery/install-managed-assets.sh /deployery/install-
 COPY docker/image/assets/deployery/patch-code-server-workbench.js /deployery/patch-code-server-workbench.js
 COPY docker/image/entrypoint.sh /entrypoint.sh
 
-RUN DEPLOYERY_CODE_SERVER_ROOTFS=/opt/deployery/base-rootfs node /deployery/patch-code-server-workbench.js \
-    && chroot /opt/deployery/base-rootfs /bin/bash -lc "su - user -c 'code-server --user-data-dir /home/user/.local/share/code-server --install-extension thang-nm.flow-icons || true'" \
+RUN mkdir -p /home/user/Desktop /home/user/.config/deployery /home/user/.local/share/code-server/User \
+    && chown -R user:user /home/user \
+    && cp /deployery/managed-assets/code-server/settings.json /home/user/.local/share/code-server/User/settings.json \
+    && node /deployery/patch-code-server-workbench.js \
+    && su - user -c 'code-server --user-data-dir /home/user/.local/share/code-server --install-extension thang-nm.flow-icons || true' \
+    && su - user -c 'code-server --user-data-dir /home/user/.local/share/code-server --install-extension /deployery/extensions/deployery-extension-desktop.vsix || true' \
     && chmod +x /entrypoint.sh /deployery/start-code-server.sh /deployery/start-sway.sh /deployery/install-managed-assets.sh /deployery/wayland-env.sh /deployery/patch-code-server-workbench.js
 
 EXPOSE 3131
