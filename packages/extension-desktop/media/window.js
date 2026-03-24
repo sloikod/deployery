@@ -46,6 +46,7 @@ let isNonResizable = false;
 
 function connect(proxyTarget = cfg.vncProxyUri) {
   cfg.vncProxyUri = proxyTarget;
+  const wsUrl = resolveWebSocketUrl(proxyTarget);
   if (rfb) {
     try {
       rfb.disconnect();
@@ -54,7 +55,7 @@ function connect(proxyTarget = cfg.vncProxyUri) {
   }
   screen.innerHTML = "";
   statusEl.textContent = "Connecting to window stream...";
-  rfb = new RFB(screen, resolveWebSocketUrl(proxyTarget));
+  rfb = new RFB(screen, wsUrl);
   rfb.scaleViewport = false;
   rfb.resizeSession = false;
   rfb.background = "transparent";
@@ -253,3 +254,5 @@ window.addEventListener("message", ({ data }) => {
       break;
   }
 });
+
+connect();

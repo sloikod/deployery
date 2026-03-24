@@ -114,6 +114,9 @@ export class WindowPanel implements vscode.Disposable {
 
   private async postReconnectMessage(wsPort: number): Promise<void> {
     const vncProxyUri = await this.resolveProxyUri(wsPort);
+    this.log.info(
+      `Panel reconnect: con_id=${this.conId} wsPort=${wsPort} proxy=${vncProxyUri}`,
+    );
     this.panel.webview.postMessage({
       type: "reconnect",
       wsPort,
@@ -125,6 +128,7 @@ export class WindowPanel implements vscode.Disposable {
     const externalUri = await vscode.env.asExternalUri(
       vscode.Uri.parse(`http://127.0.0.1:${port}`),
     );
+    this.log.info(`Resolved external URI: port=${port} uri=${externalUri}`);
     return externalUri.toString();
   }
 
@@ -166,6 +170,9 @@ export class WindowPanel implements vscode.Disposable {
     const csp = this.panel.webview.cspSource;
     const vncProxyUri = await this.resolveProxyUri(this.wsPort);
     const audioProxyUri = await this.resolveProxyUri(AUDIO_WS_PORT);
+    this.log.info(
+      `Initializing panel: con_id=${this.conId} wsPort=${this.wsPort} vncProxy=${vncProxyUri} audioProxy=${audioProxyUri}`,
+    );
 
     const cfg = JSON.stringify({
       conId: this.conId,
