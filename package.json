@@ -13,11 +13,11 @@
   "scripts": {
     "dev:api": "turbo run dev --filter=@deployery/api",
     "build": "turbo run build",
-    "build:docker": "docker compose build",
-    "up": "docker compose up --build",
-    "up:clean": "docker compose down -v && docker compose up --build",
-    "down": "docker compose down",
-    "down:clean": "docker compose down -v",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up --build",
+    "docker:up:clean": "docker compose down -v && docker compose up --build",
+    "docker:down": "docker compose down",
+    "docker:down:clean": "docker compose down -v",
     "check": "pnpm lint && pnpm check-types && pnpm test:run",
     "lint": "turbo run lint",
     "check-types": "turbo run check-types",
@@ -28,14 +28,14 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,yml,yaml}\""
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@types/node": "^22.15.3",
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^22.19.15",
     "@vitest/coverage-v8": "^4.1.1",
-    "eslint": "^9.39.1",
-    "prettier": "^3.7.4",
+    "eslint": "^9.39.4",
+    "prettier": "^3.8.1",
     "turbo": "^2.8.20",
     "typescript": "5.9.2",
-    "typescript-eslint": "^8.50.0",
+    "typescript-eslint": "^8.57.2",
     "vitest": "^4.1.1"
   }
 }
