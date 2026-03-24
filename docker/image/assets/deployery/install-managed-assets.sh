@@ -8,11 +8,13 @@ MANAGED_ASSETS_DIR="/opt/deployery/managed-assets"
 EXTENSION_VSIX="/opt/deployery/extensions/deployery-extension-desktop.vsix"
 SANDBOX_DEPLOYERY_DIR="${SANDBOX_ROOTFS}/deployery"
 SANDBOX_EXTENSION_DIR="${SANDBOX_ROOTFS}/opt/deployery/extensions"
+SANDBOX_BRANDING_DIR="${SANDBOX_ROOTFS}/opt/deployery/code-server-branding"
 
 mkdir -p "${SANDBOX_USER_HOME}/Desktop"
 mkdir -p "${SANDBOX_USER_HOME}/.local/share/code-server/User"
 mkdir -p "${SANDBOX_ROOTFS}/etc/profile.d"
 mkdir -p "${SANDBOX_EXTENSION_DIR}"
+mkdir -p "${SANDBOX_BRANDING_DIR}"
 
 mkdir -p "${SANDBOX_USER_HOME}/.config/deployery"
 cat > "${SANDBOX_USER_HOME}/.config/deployery/env" <<EOF
@@ -22,6 +24,7 @@ EOF
 
 rsync -a --ignore-existing "${MANAGED_ASSETS_DIR}/Desktop/" "${SANDBOX_USER_HOME}/Desktop/"
 rsync -a --delete /deployery/ "${SANDBOX_DEPLOYERY_DIR}/"
+rsync -a --delete "${MANAGED_ASSETS_DIR}/code-server/branding/" "${SANDBOX_BRANDING_DIR}/"
 cp /etc/resolv.conf "${SANDBOX_ROOTFS}/etc/resolv.conf"
 
 if [ ! -f "${SANDBOX_USER_HOME}/.local/share/code-server/User/settings.json" ]; then
@@ -43,6 +46,17 @@ cat > "${SANDBOX_ROOTFS}/usr/local/bin/deployery" <<'EOF'
 exec node /deployery/packages/cli/dist/main.js "$@"
 EOF
 chmod +x "${SANDBOX_ROOTFS}/usr/local/bin/deployery"
+
+CODE_SERVER_MEDIA_DIR="$(find "${SANDBOX_ROOTFS}/usr/lib/code-server" -path '*/src/browser/media' | head -1 || true)"
+if [ -n "${CODE_SERVER_MEDIA_DIR}" ]; then
+  cp "${SANDBOX_BRANDING_DIR}/deployery-favicon.svg" "${CODE_SERVER_MEDIA_DIR}/favicon.svg"
+  cp "${SANDBOX_BRANDING_DIR}/deployery-favicon.svg" "${CODE_SERVER_MEDIA_DIR}/favicon-dark-support.svg"
+  cp "${SANDBOX_BRANDING_DIR}/deployery-favicon.ico" "${CODE_SERVER_MEDIA_DIR}/favicon.ico"
+  cp "${SANDBOX_BRANDING_DIR}/pwa-icon-192.png" "${CODE_SERVER_MEDIA_DIR}/pwa-icon-192.png"
+  cp "${SANDBOX_BRANDING_DIR}/pwa-icon-512.png" "${CODE_SERVER_MEDIA_DIR}/pwa-icon-512.png"
+  cp "${SANDBOX_BRANDING_DIR}/pwa-icon-maskable-192.png" "${CODE_SERVER_MEDIA_DIR}/pwa-icon-maskable-192.png"
+  cp "${SANDBOX_BRANDING_DIR}/pwa-icon-maskable-512.png" "${CODE_SERVER_MEDIA_DIR}/pwa-icon-maskable-512.png"
+fi
 
 if [ -f "${EXTENSION_VSIX}" ]; then
   cp "${EXTENSION_VSIX}" "${SANDBOX_EXTENSION_DIR}/deployery-extension-desktop.vsix"

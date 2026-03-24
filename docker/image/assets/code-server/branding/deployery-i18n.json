@@ -1,0 +1,13 @@
+{
+  "LOGIN_TITLE": "Deployery access",
+  "LOGIN_BELOW": "Sign in to open your Deployery workspace.",
+  "WELCOME": "Welcome to Deployery",
+  "LOGIN_PASSWORD": "Use the password configured for this Deployery environment.",
+  "LOGIN_USING_ENV_PASSWORD": "Password provided from $PASSWORD.",
+  "LOGIN_USING_HASHED_PASSWORD": "Password provided from $HASHED_PASSWORD.",
+  "SUBMIT": "ENTER DEPLOYERY",
+  "PASSWORD_PLACEHOLDER": "DEPLOYERY PASSWORD",
+  "LOGIN_RATE_LIMIT": "Too many sign-in attempts. Please wait a moment.",
+  "MISS_PASSWORD": "Password required",
+  "INCORRECT_PASSWORD": "Incorrect password"
+}

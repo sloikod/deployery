@@ -14,6 +14,9 @@ CODE_SERVER_CMD=(
   /usr/bin/code-server
   --bind-addr "127.0.0.1:${CODE_SERVER_PORT}"
   --auth none
+  --app-name "Deployery"
+  --i18n /opt/deployery/code-server-branding/deployery-i18n.json
+  --disable-getting-started-override
   --disable-telemetry
   --disable-update-check
   "${EXTRA_ARGS[@]}"

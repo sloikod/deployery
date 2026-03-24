@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Deployery placeholder logo</title>
+  <desc id="desc">A temporary Deployery logo rendered as simple black shapes.</desc>
+  <rect x="72" y="72" width="368" height="368" rx="96" fill="#000000" />
+  <path
+    fill="#ffffff"
+    d="M188 150h84c78 0 132 43 132 106s-54 106-132 106h-84V150zm68 55v102h15c42 0 69-19 69-51s-27-51-69-51h-15z"
+  />
+</svg>
