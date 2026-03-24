@@ -4,9 +4,15 @@
 {$DEPLOYERY_DOMAIN:localhost} {
 
     # Rate limit per client IP.
-    # 1000 req/min (16/sec) allows heavy AI agent usage while still blocking
+    # 3000 req/min (50/sec) allows heavy AI agent usage while still blocking
     # floods and bots. Only sustained automated abuse will ever hit this.
-    rate_limit {remote.ip} 3000r/m
+    rate_limit {
+        zone per_ip {
+            key    {remote.host}
+            events 3000
+            window 1m
+        }
+    }
 
     # Proxy everything to the deployery API.
     reverse_proxy sandbox:3131 {
