@@ -198,15 +198,16 @@ export class WorkflowEngine {
     await this.store.init();
 
     for (const run of await this.store.listRecoverableRuns()) {
+      let recoveredRun = run;
       if (run.status === "running") {
-        await this.store.updateRun(run.id, {
+        recoveredRun = await this.store.updateRun(run.id, {
           status: "queued",
           error: run.error,
         });
       }
 
-      if (run.status === "queued") {
-        this.scheduleRun(run.id);
+      if (recoveredRun.status === "queued") {
+        this.scheduleRun(recoveredRun.id);
       }
     }
 
