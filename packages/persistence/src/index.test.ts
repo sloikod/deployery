@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import fs from "fs";
+import os from "os";
+import path from "path";
 
 import { parseWorkflowManifest } from "@deployery/workflow-schema";
 
@@ -75,6 +78,55 @@ describe("loadPersistenceOptionsFromEnv", () => {
     vi.stubEnv("DB_TYPE", "postgresql");
     const opts = loadPersistenceOptionsFromEnv();
     expect(opts.type).toBe("postgres");
+  });
+
+  it("reads sqlite configuration from *_FILE env vars", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "deployery-env-"));
+    const dbTypeFile = path.join(tempDir, "db-type.txt");
+    const sqlitePathFile = path.join(tempDir, "sqlite-path.txt");
+    fs.writeFileSync(dbTypeFile, "sqlite\n");
+    fs.writeFileSync(sqlitePathFile, "/data/from-file.sqlite\n");
+
+    vi.stubEnv("DB_TYPE_FILE", dbTypeFile);
+    vi.stubEnv("DEPLOYERY_SQLITE_PATH_FILE", sqlitePathFile);
+
+    const opts = loadPersistenceOptionsFromEnv("./default.sqlite");
+    expect(opts).toEqual({
+      type: "sqlite",
+      sqlitePath: "/data/from-file.sqlite",
+    });
+  });
+
+  it("reads postgres settings from env files and parses port/ssl", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "deployery-env-"));
+    const dbTypeFile = path.join(tempDir, "db-type.txt");
+    const hostFile = path.join(tempDir, "host.txt");
+    const passwordFile = path.join(tempDir, "password.txt");
+    fs.writeFileSync(dbTypeFile, "postgresdb\n");
+    fs.writeFileSync(hostFile, "db.internal\n");
+    fs.writeFileSync(passwordFile, "super-secret\n");
+
+    vi.stubEnv("DB_TYPE_FILE", dbTypeFile);
+    vi.stubEnv("DB_POSTGRESDB_HOST_FILE", hostFile);
+    vi.stubEnv("DB_POSTGRESDB_PASSWORD_FILE", passwordFile);
+    vi.stubEnv("DB_POSTGRESDB_PORT", "6543");
+    vi.stubEnv("DB_POSTGRESDB_DATABASE", "deployery");
+    vi.stubEnv("DB_POSTGRESDB_USER", "deployery");
+    vi.stubEnv("DB_POSTGRESDB_SSL_ENABLED", "true");
+
+    const opts = loadPersistenceOptionsFromEnv();
+    expect(opts).toEqual({
+      type: "postgres",
+      postgres: {
+        connectionUrl: undefined,
+        host: "db.internal",
+        port: 6543,
+        database: "deployery",
+        user: "deployery",
+        password: "super-secret",
+        sslEnabled: true,
+      },
+    });
   });
 
   it("throws on unknown DB_TYPE", () => {
@@ -248,6 +300,31 @@ describe("PersistenceStore (sqlite :memory:)", () => {
       expect(updated.status).toBe("completed");
       expect(updated.output).toEqual({ result: "done" });
       expect(updated.finishedAt).toBe(now);
+    });
+
+    it("can clear nullable run fields explicitly", async () => {
+      const run = await store.createRun({
+        workflowId,
+        triggerType: "manual",
+        stepRuns: [],
+      });
+      await store.updateRun(run.id, {
+        error: "boom",
+        resumeToken: "resume-me",
+        resumeAt: 12345,
+        finishedAt: 99999,
+      });
+
+      const updated = await store.updateRun(run.id, {
+        error: null,
+        resumeToken: null,
+        resumeAt: null,
+        finishedAt: null,
+      });
+      expect(updated.error).toBeNull();
+      expect(updated.resumeToken).toBeNull();
+      expect(updated.resumeAt).toBeNull();
+      expect(updated.finishedAt).toBeNull();
     });
 
     it("stores and retrieves stepRuns", async () => {
@@ -442,7 +519,7 @@ describe("PersistenceStore (sqlite :memory:)", () => {
       expect(logs[0].chunk).toBe("second");
     });
 
-    it("returns empty list for run with no logs", async () => {
+  it("returns empty list for run with no logs", async () => {
       expect(await store.listRunLogs(runId)).toEqual([]);
     });
   });
@@ -547,6 +624,17 @@ describe("PersistenceStore (sqlite :memory:)", () => {
       expect(result.id).toBeTruthy();
       expect(result.name).toBe("my-key");
       expect(result.prefix).toBe("abcdefgh");
+    });
+
+    it("does not verify revoked API keys", async () => {
+      const created = await store.createApiKey("revoked", "revoked-key");
+      await store.db.run(`UPDATE api_keys SET revoked_at = ? WHERE id = ?`, [
+        Date.now(),
+        created.id,
+      ]);
+
+      expect(await store.verifyApiKey("revoked-key")).toBe(false);
+      expect(await store.asyncKeyCount()).toBe(0);
     });
   });
 
