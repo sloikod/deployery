@@ -2,12 +2,17 @@
 set -euo pipefail
 
 SANDBOX_ROOTFS="${DEPLOYERY_SANDBOX_ROOTFS:?DEPLOYERY_SANDBOX_ROOTFS is required}"
-SANDBOX_HOME="${DEPLOYERY_SANDBOX_HOME:-/home/deployery}"
+SANDBOX_HOME="${DEPLOYERY_SANDBOX_HOME:-/home/user}"
 
 # Ensure /tmp exists and is world-writable - debootstrap --variant=minbase does not
 # guarantee this, and rsync preserves whatever permissions the template had.
 mkdir -p "${SANDBOX_ROOTFS}/tmp"
 chmod 1777 "${SANDBOX_ROOTFS}/tmp"
+
+# A persisted rootfs can carry forward an old config file owned by a previous
+# sandbox user (for example, from before the user account name changed). Remove
+# it so startup does not depend on its existing permissions.
+rm -f "${SANDBOX_ROOTFS}/tmp/sway-config"
 
 # Write the Sway config into the chroot's /tmp before starting the compositor.
 # This mirrors what the VS Code extension writes at runtime (app-session.ts:SWAY_CONFIG),
@@ -28,14 +33,16 @@ output * scale 1
 seat * xcursor_theme transparent-cursor 24
 EOF
 
-# Ensure XDG_RUNTIME_DIR exists and is owned by deployery before Sway starts.
-chroot --userspec=deployery:deployery "${SANDBOX_ROOTFS}" \
+chroot "${SANDBOX_ROOTFS}" chown user:user /tmp/sway-config
+
+# Ensure XDG_RUNTIME_DIR exists and is owned by user before Sway starts.
+chroot --userspec=user:user "${SANDBOX_ROOTFS}" \
     /bin/bash -c "mkdir -p /tmp/sway-runtime && chmod 700 /tmp/sway-runtime"
 
-exec chroot --userspec=deployery:deployery "${SANDBOX_ROOTFS}" /usr/bin/env -i \
+exec chroot --userspec=user:user "${SANDBOX_ROOTFS}" /usr/bin/env -i \
     HOME="${SANDBOX_HOME}" \
-    USER="deployery" \
-    LOGNAME="deployery" \
+    USER="user" \
+    LOGNAME="user" \
     SHELL="/bin/bash" \
     PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
     XDG_RUNTIME_DIR=/tmp/sway-runtime \

@@ -45,7 +45,7 @@ deb http://security.ubuntu.com/ubuntu noble-security main universe\n" > /opt/dep
         pulseaudio python3-websockify sway wayvnc xwayland xdg-utils ripgrep fd-find fzf less jq unzip procps locales \
       && rm -rf /var/lib/apt/lists/*" \
     && chroot /opt/deployery/base-rootfs /bin/bash -lc "curl -fsSL https://code-server.dev/install.sh | sh" \
-    && chroot /opt/deployery/base-rootfs /bin/bash -lc "useradd -m -s /bin/bash deployery && echo 'deployery ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/deployery" \
+    && chroot /opt/deployery/base-rootfs /bin/bash -lc "useradd -m -s /bin/bash user && echo 'user ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/user" \
     && chroot /opt/deployery/base-rootfs /bin/bash -lc "ln -sf /usr/bin/fdfind /usr/local/bin/fd" \
     && chroot /opt/deployery/base-rootfs /bin/bash -lc "locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8"
 
@@ -61,9 +61,12 @@ COPY docker/image/assets/deployery/fonts-local.conf /deployery/fonts-local.conf
 COPY docker/image/assets/deployery/start-code-server.sh /deployery/start-code-server.sh
 COPY docker/image/assets/deployery/start-sway.sh /deployery/start-sway.sh
 COPY docker/image/assets/deployery/install-managed-assets.sh /deployery/install-managed-assets.sh
+COPY docker/image/assets/deployery/patch-code-server-workbench.js /deployery/patch-code-server-workbench.js
 COPY docker/image/entrypoint.sh /entrypoint.sh
 
-RUN chmod +x /entrypoint.sh /deployery/start-code-server.sh /deployery/start-sway.sh /deployery/install-managed-assets.sh /deployery/wayland-env.sh
+RUN DEPLOYERY_CODE_SERVER_ROOTFS=/opt/deployery/base-rootfs node /deployery/patch-code-server-workbench.js \
+    && chroot /opt/deployery/base-rootfs /bin/bash -lc "su - user -c 'code-server --user-data-dir /home/user/.local/share/code-server --install-extension thang-nm.flow-icons || true'" \
+    && chmod +x /entrypoint.sh /deployery/start-code-server.sh /deployery/start-sway.sh /deployery/install-managed-assets.sh /deployery/wayland-env.sh /deployery/patch-code-server-workbench.js
 
 EXPOSE 3131
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SANDBOX_ROOTFS="${DEPLOYERY_SANDBOX_ROOTFS:?DEPLOYERY_SANDBOX_ROOTFS is required}"
-SANDBOX_HOME="${DEPLOYERY_SANDBOX_HOME:-/home/deployery}"
+SANDBOX_HOME="${DEPLOYERY_SANDBOX_HOME:-/home/user}"
 CODE_SERVER_PORT="${DEPLOYERY_CODE_SERVER_PORT:-13337}"
 EXTRA_ARGS=("$@")
 
@@ -20,10 +20,10 @@ CODE_SERVER_CMD=(
 )
 printf -v CODE_SERVER_CMD_STR '%q ' "${CODE_SERVER_CMD[@]}"
 
-exec chroot --userspec=deployery:deployery "${SANDBOX_ROOTFS}" /usr/bin/env -i \
+exec chroot --userspec=user:user "${SANDBOX_ROOTFS}" /usr/bin/env -i \
   HOME="${SANDBOX_HOME}" \
-  USER="deployery" \
-  LOGNAME="deployery" \
+  USER="user" \
+  LOGNAME="user" \
   SHELL="/bin/bash" \
   PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
   VSCODE_PROXY_URI="./proxy/{{port}}" \
