@@ -18,8 +18,11 @@
 | `DEPLOYERY_SANDBOX_ISOLATION_MODE` | `compatibility` | Operator-visible deployment profile, for example `compatibility` or `hardened-runsc`. |
 | `DEPLOYERY_SANDBOX_RUNTIME` | `runc` | Container runtime name used by Docker, for example `runc` or `runsc`. |
 | `DEPLOYERY_SANDBOX_SECCOMP_PROFILE` | `unconfined` | Seccomp profile applied to the sandbox container. `unconfined` is the desktop-friendly default for plain Docker. |
+| `DEPLOYERY_SANDBOX_GPU_COUNT` | `0` | Number of NVIDIA GPUs to reserve for the sandbox. Use `all` to expose all host GPUs. |
+| `DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES` | `all` | NVIDIA device selection passed into the container runtime. Useful for choosing specific GPU indexes or UUIDs on GPU-enabled hosts. |
+| `DEPLOYERY_SANDBOX_NVIDIA_DRIVER_CAPABILITIES` | `compute,utility` | NVIDIA driver capabilities exposed to the sandbox. The default is aimed at CUDA / AI workloads. |
 | `DEPLOYERY_SANDBOX_SHM_SIZE` | `1gb` | Shared memory size for the outer sandbox container. |
-| `DEPLOYERY_SANDBOX_TMP_SIZE` | `1g` | `tmpfs` size for the outer sandbox container `/tmp`. |
+| `DEPLOYERY_SANDBOX_TMP_SIZE` | `8g` | `tmpfs` size for the outer sandbox container `/tmp`. |
 | `DEPLOYERY_SANDBOX_RUN_SIZE` | `128m` | `tmpfs` size for the outer sandbox container `/run`. |
 
 ## Database selection

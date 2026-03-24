@@ -53,6 +53,12 @@ with `runsc`:
 DEPLOYERY_SANDBOX_RUNTIME=runsc DEPLOYERY_SANDBOX_ISOLATION_MODE=hardened-runsc docker compose up -d --build
 ```
 
+For NVIDIA-backed AI workloads on plain Docker / `runc`:
+
+```bash
+DEPLOYERY_SANDBOX_GPU_COUNT=all docker compose up -d --build
+```
+
 ## Current Scope
 
 - Full repo skeleton and package wiring

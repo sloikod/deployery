@@ -9,6 +9,7 @@ SANDBOX_USER_HOME="${SANDBOX_HOME}"
 mkdir -p "${SANDBOX_USER_HOME}/Desktop"
 mkdir -p "${SANDBOX_USER_HOME}/.local/share/code-server/User"
 mkdir -p /etc/profile.d
+mkdir -p /etc/apt/apt.conf.d
 mkdir -p "${SANDBOX_USER_HOME}/.config/deployery"
 
 cat > "${SANDBOX_USER_HOME}/.config/deployery/env" <<EOF
@@ -22,6 +23,12 @@ if [ ! -f "${SANDBOX_USER_HOME}/.local/share/code-server/User/settings.json" ]; 
   cp "${MANAGED_ASSETS_DIR}/code-server/settings.json" "${SANDBOX_USER_HOME}/.local/share/code-server/User/settings.json"
 fi
 cp /deployery/wayland-env.sh /etc/profile.d/deployery-wayland.sh
+
+cat > /etc/apt/apt.conf.d/80deployery-network <<'EOF'
+Acquire::Retries "3";
+Acquire::http::Timeout "20";
+Acquire::https::Timeout "20";
+EOF
 
 if ! grep -q "deployery-wayland.sh" "${SANDBOX_USER_HOME}/.bashrc" 2>/dev/null; then
   printf '\nsource /etc/profile.d/deployery-wayland.sh\n' >> "${SANDBOX_USER_HOME}/.bashrc"

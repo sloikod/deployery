@@ -14,6 +14,7 @@
     "dev:api": "turbo run dev --filter=@deployery/api",
     "build": "turbo run build",
     "docker:build": "docker compose build",
+    "docker:build:clean": "docker compose down -v && docker compose build",
     "docker:up": "docker compose up --build",
     "docker:up:clean": "docker compose down -v && docker compose up --build",
     "docker:down": "docker compose down",

@@ -67,6 +67,66 @@ The runtime mode is surfaced at:
 - `/healthz/readiness`
 - `/api/v1/runtime`
 
+## GPU Support
+
+Deployery now supports opt-in NVIDIA GPU access for AI and compute workloads in
+the default plain-Docker / `runc` profile.
+
+Recommended shape today:
+
+- use `runc` for GPU-backed AI workloads
+- use `runsc` when host isolation matters more than maximum GPU and desktop
+  compatibility
+- treat `runsc` + GPU as a future hardening path, not the primary supported GPU
+  path yet
+
+### Host setup
+
+On the Linux host:
+
+1. Install an NVIDIA driver supported by your GPU.
+2. Install the NVIDIA Container Toolkit.
+3. Configure Docker for NVIDIA containers:
+
+```bash
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+4. Verify the host setup before starting Deployery:
+
+```bash
+docker run --rm --gpus all ubuntu nvidia-smi
+```
+
+### Start Deployery with GPU access
+
+Expose all GPUs:
+
+```bash
+DEPLOYERY_SANDBOX_GPU_COUNT=all docker compose up -d --build
+```
+
+Expose one GPU:
+
+```bash
+DEPLOYERY_SANDBOX_GPU_COUNT=1 docker compose up -d --build
+```
+
+Choose specific devices by index or UUID:
+
+```bash
+DEPLOYERY_SANDBOX_GPU_COUNT=all \
+DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES=0 \
+docker compose up -d --build
+```
+
+By default Deployery requests `compute,utility` NVIDIA driver capabilities,
+which is the right baseline for CUDA, PyTorch, model inference, and tools such
+as `nvidia-smi`.
+
+The active GPU request is exposed at `/api/v1/runtime`.
+
 ## Sandbox Persistence
 
 Deployery persists the sandbox directly through mounted system directories:

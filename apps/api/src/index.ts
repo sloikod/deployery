@@ -20,6 +20,12 @@ interface SandboxRuntimeInfo {
   rootfsPath: string;
   homePath: string;
   codeServerPort: number;
+  gpu: {
+    requested: boolean;
+    count: string;
+    visibleDevices: string;
+    driverCapabilities: string;
+  };
 }
 
 const VALID_WORKFLOW_NAME = /^[a-z][a-z0-9-]*$/;
@@ -104,7 +110,16 @@ async function main(): Promise<void> {
     "DEPLOYERY_SANDBOX_ISOLATION_MODE",
     "compatibility",
   );
-  const sandboxRuntime = getEnv("DEPLOYERY_SANDBOX_RUNTIME", "docker");
+  const sandboxRuntime = getEnv("DEPLOYERY_SANDBOX_RUNTIME", "runc");
+  const sandboxGpuCount = getEnv("DEPLOYERY_SANDBOX_GPU_COUNT", "0");
+  const sandboxVisibleDevices = getEnv(
+    "DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES",
+    "all",
+  );
+  const sandboxDriverCapabilities = getEnv(
+    "DEPLOYERY_SANDBOX_NVIDIA_DRIVER_CAPABILITIES",
+    "compute,utility",
+  );
   const sqlitePath =
     process.env.DB_SQLITE_PATH ??
     getEnv("DEPLOYERY_SQLITE_PATH", "/var/lib/deployery/data/deployery.sqlite");
@@ -116,6 +131,12 @@ async function main(): Promise<void> {
     rootfsPath: sandboxRootfsPath,
     homePath: sandboxHomePath,
     codeServerPort,
+    gpu: {
+      requested: sandboxGpuCount !== "0",
+      count: sandboxGpuCount,
+      visibleDevices: sandboxVisibleDevices,
+      driverCapabilities: sandboxDriverCapabilities,
+    },
   };
 
   if (persistence.type === "sqlite") {

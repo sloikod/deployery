@@ -38,6 +38,8 @@ The main pieces are:
   - should be treated as hostile code execution from the host's perspective
   - in plain `runc` mode, Deployery uses an explicit desktop-friendly seccomp
     posture so browser and Electron namespace sandboxes can still initialize
+  - optional NVIDIA GPU reservations are exposed for AI and compute workloads in
+    the plain `runc` profile
 
 ## Repo Layout
 
@@ -91,5 +93,7 @@ The protection boundary is therefore outside the guest:
 - `runsc` is the recommended production runtime on supported hosts
 - plain `runc` mode prioritizes desktop compatibility over strict seccomp
   filtering
+- NVIDIA GPU support is currently centered on the plain `runc` profile for AI
+  workloads
 - persistent system paths keep installed software and configuration, while
   compositor/runtime scratch state remains ephemeral
