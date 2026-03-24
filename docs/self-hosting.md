@@ -16,7 +16,7 @@ If you are running from this repository directly, use the source compose file:
 ```bash
 pnpm install
 pnpm build
-docker compose up --build
+pnpm dev
 ```
 
 Open `http://localhost:3131` after the sandbox finishes booting.
@@ -38,7 +38,7 @@ Set the database environment variables before starting:
 ```bash
 DB_TYPE=postgres
 DB_POSTGRESDB_CONNECTION_URL=postgresql://deployery:secret@db:5432/deployery
-docker compose up --build
+pnpm dev
 ```
 
 You can also provide the Postgres host, port, database, user, and password as

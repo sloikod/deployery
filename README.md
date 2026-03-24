@@ -30,7 +30,7 @@ docker/image              Docker build and runtime assets
 ```bash
 pnpm install
 pnpm build
-docker compose up --build
+pnpm dev
 ```
 
 The container initializes a persistent sandbox root filesystem at
