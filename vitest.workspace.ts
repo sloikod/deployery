@@ -1,18 +1,21 @@
-import { defineWorkspace } from "vitest/config";
+import { defineProject } from "vitest/config";
 
-export default defineWorkspace([
-  {
+export default [
+  defineProject({
     test: {
       name: "unit",
       include: ["apps/**/*.test.ts", "packages/**/*.test.ts"],
-      exclude: ["**/dist/**"]
-    }
-  },
-  {
+      exclude: ["**/dist/**"],
+    },
+  }),
+  defineProject({
     test: {
       name: "integration",
-      include: ["apps/**/*.integration.test.ts", "packages/**/*.integration.test.ts"],
-      exclude: ["**/dist/**"]
-    }
-  }
-]);
+      include: [
+        "apps/**/*.integration.test.ts",
+        "packages/**/*.integration.test.ts",
+      ],
+      exclude: ["**/dist/**"],
+    },
+  }),
+];

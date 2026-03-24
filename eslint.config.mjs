@@ -7,15 +7,9 @@ export default tseslint.config(
       "**/dist/**",
       "**/out/**",
       "**/node_modules/**",
-      "docker/image/assets/**"
-    ]
+      "docker/image/assets/**",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  {
-    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.mjs"],
-    rules: {
-      "@typescript-eslint/no-explicit-any": "off"
-    }
-  }
 );
