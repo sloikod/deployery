@@ -18,6 +18,7 @@ services:
 
   sandbox:
     image: ${DEPLOYERY_IMAGE:-ghcr.io/OWNER/deployery:latest}
+    hostname: deployery
     # runtime: runsc  # Uncomment to enable gVisor on VPS hosts.
     #                  # Install: https://gvisor.dev/docs/user_guide/install/
     #                  # Requires --host-uds=all in /etc/docker/daemon.json runsc opts

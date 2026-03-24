@@ -21,6 +21,7 @@ services:
 
   sandbox:
     image: deployery:local
+    hostname: deployery
     build:
       context: .
       dockerfile: docker/image/Dockerfile
