@@ -44,9 +44,14 @@ deb http://security.ubuntu.com/ubuntu noble-security main universe\n" > /opt/dep
         sudo curl ca-certificates git gnupg python3 python3-pip nodejs npm dbus-user-session \
         pulseaudio python3-websockify sway wayvnc xwayland xdg-utils ripgrep fd-find fzf less jq unzip procps locales \
       && rm -rf /var/lib/apt/lists/*" \
+    && install -d -m 0755 /opt/deployery/base-rootfs/etc/apt/keyrings \
+    && curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /opt/deployery/base-rootfs/etc/apt/keyrings/google-linux.gpg \
+    && printf "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-linux.gpg] https://dl.google.com/linux/chrome/deb/ stable main\n" > /opt/deployery/base-rootfs/etc/apt/sources.list.d/google-chrome.list \
+    && chroot /opt/deployery/base-rootfs /bin/bash -lc "apt-get update && apt-get install -y --no-install-recommends google-chrome-stable && rm -rf /var/lib/apt/lists/*" \
     && chroot /opt/deployery/base-rootfs /bin/bash -lc "curl -fsSL https://code-server.dev/install.sh | sh" \
     && chroot /opt/deployery/base-rootfs /bin/bash -lc "useradd -m -s /bin/bash user && echo 'user ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/user" \
     && chroot /opt/deployery/base-rootfs /bin/bash -lc "ln -sf /usr/bin/fdfind /usr/local/bin/fd" \
+    && chroot /opt/deployery/base-rootfs /bin/bash -lc "ln -sf /usr/bin/google-chrome-stable /usr/local/bin/google-chrome" \
     && chroot /opt/deployery/base-rootfs /bin/bash -lc "locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8"
 
 WORKDIR /deployery
@@ -55,6 +60,7 @@ COPY --from=builder /workspace /deployery
 COPY --from=builder /workspace/packages/extension-desktop/deployery-extension-desktop.vsix /opt/deployery/extensions/deployery-extension-desktop.vsix
 COPY docker/image/assets/Desktop /opt/deployery/managed-assets/Desktop
 COPY docker/image/assets/code-server /opt/deployery/managed-assets/code-server
+COPY docker/image/assets/code-server/branding /opt/deployery/code-server-branding
 COPY docker/image/assets/deployery/wayland-env.sh /deployery/wayland-env.sh
 COPY docker/image/assets/deployery/virtual-pointer.py /deployery/virtual-pointer.py
 COPY docker/image/assets/deployery/fonts-local.conf /deployery/fonts-local.conf
