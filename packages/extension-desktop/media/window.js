@@ -60,7 +60,7 @@ function connect(proxyTarget = cfg.vncProxyUri) {
   rfb.resizeSession = false;
   rfb.background = "transparent";
   rfb.qualityLevel = 9;
-  rfb.showDotCursor = true;
+  rfb.showDotCursor = false;
 
   rfb.addEventListener("connect", () => {
     retryDelay = 1000;

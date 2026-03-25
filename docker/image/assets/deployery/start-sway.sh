@@ -20,7 +20,7 @@ bar {
 }
 output * bg #000000 solid_color
 output * scale 1
-seat * xcursor_theme transparent-cursor 24
+seat * xcursor_theme macOS-Monterey 24
 EOF
 
 chown user:user /tmp/sway-config /tmp/sway-runtime
@@ -37,6 +37,6 @@ exec /usr/bin/sudo -u user /usr/bin/env -i \
     WLR_RENDERER=pixman \
     WLR_LIBINPUT_NO_DEVICES=1 \
     LIBSEAT_BACKEND=noop \
-    XCURSOR_THEME=transparent-cursor \
+    XCURSOR_THEME=macOS-Monterey \
     XCURSOR_SIZE=24 \
-    sway --config /tmp/sway-config
+    sway --unsupported-gpu --config /tmp/sway-config

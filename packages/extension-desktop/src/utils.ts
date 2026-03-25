@@ -3,7 +3,6 @@ import { exec } from "child_process";
 export const SWAY_RUNTIME_DIR = "/tmp/sway-runtime";
 export const SWAY_CONFIG_PATH = "/tmp/sway-config";
 export const DEPLOYERY_ENV_FILE = "/home/user/.config/deployery/env";
-export const VIRTUAL_POINTER_PATH = "/deployery/virtual-pointer.py";
 
 export const AUDIO_WS_PORT = 8765;
 export const PULSE_TCP_PORT = 8766;

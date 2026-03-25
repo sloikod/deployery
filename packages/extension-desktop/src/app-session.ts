@@ -8,7 +8,6 @@ import {
   SWAY_RUNTIME_DIR,
   SWAY_CONFIG_PATH,
   DEPLOYERY_ENV_FILE,
-  VIRTUAL_POINTER_PATH,
 } from "./utils";
 
 /**
@@ -110,10 +109,7 @@ bar {
 }
 output * bg #000000 solid_color
 output * scale 1
-# Transparent cursor theme: wlroots headless bakes the software cursor into screencopy
-# frames unconditionally (no separate cursor plane). A transparent theme makes the
-# baked-in cursor invisible. noVNC renders a smooth client-side dot via showDotCursor.
-seat * xcursor_theme transparent-cursor 24
+seat * xcursor_theme macOS-Monterey 24
 `;
 
 interface WindowStream {
@@ -169,7 +165,6 @@ function getOrderedSwaySockets(files: string[]): string[] {
 export class SwaySession implements vscode.Disposable {
   private sway: ChildProcess | null = null;
   private eventSub: ChildProcess | null = null;
-  private virtualPointer: ChildProcess | null = null;
   private disposed = false;
   /** Sequential port offset - incremented for each new window. Instance field so
    *  multiple SwaySession instances (across extension host restarts) don't share state. */
@@ -246,7 +241,6 @@ export class SwaySession implements vscode.Disposable {
       await runSilent("pkill -x wayvnc; pkill -f 'websockify [7]'");
       await sleep(300);
       await this.detectXWaylandDisplay();
-      await this.spawnVirtualPointer();
       // Subscribe before get_tree so any window events that fire while the
       // snapshot runs are captured rather than missed.
       this.subscribeToEvents();
@@ -256,7 +250,7 @@ export class SwaySession implements vscode.Disposable {
 
     this.log.info("No existing Sway found after 10s, starting compositor...");
     fs.writeFileSync(SWAY_CONFIG_PATH, SWAY_CONFIG);
-    this.sway = spawn("sway", ["--config", SWAY_CONFIG_PATH], {
+    this.sway = spawn("sway", ["--unsupported-gpu", "--config", SWAY_CONFIG_PATH], {
       env: {
         ...process.env,
         WLR_BACKENDS: "headless",
@@ -266,7 +260,7 @@ export class SwaySession implements vscode.Disposable {
         XDG_RUNTIME_DIR: SWAY_RUNTIME_DIR,
         // Cursor theme: required for wayvnc's cursor-shape RFB events.
         // .bashrc exports aren't inherited by extension-spawned processes.
-        XCURSOR_THEME: "transparent-cursor",
+        XCURSOR_THEME: "macOS-Monterey",
         XCURSOR_SIZE: "24",
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -311,7 +305,6 @@ export class SwaySession implements vscode.Disposable {
 
     this.log.info(`Sway compositor started (WAYLAND_DISPLAY=${waylandSocket})`);
 
-    await this.spawnVirtualPointer();
     this.subscribeToEvents();
   }
 
@@ -360,7 +353,7 @@ export class SwaySession implements vscode.Disposable {
    * walking get_tree and firing onWindowMapped for each app window found.
    * Ports are re-assigned from offset 0 - same order → same ports as before.
    *
-   * Retries up to 3 times with a 1s delay when the tree is empty: after E2B
+   * Retries up to 3 times with a 1s delay when the tree is empty: after
    * resume, Chrome (and other Wayland clients) may take a moment to re-register
    * their surfaces with the unfrozen Sway compositor before appearing in get_tree.
    */
@@ -404,40 +397,6 @@ export class SwaySession implements vscode.Disposable {
         appId,
       });
     }
-  }
-
-  private async spawnVirtualPointer(): Promise<void> {
-    // Kill any stale instance and wait for the kernel uinput device to be released
-    // before creating a new one - otherwise the new instance may fail silently,
-    // leaving the Wayland seat without pointer capability (clicks dropped).
-    await runSilent("pkill -f virtual-pointer.py");
-    await sleep(300);
-    this.virtualPointer = spawn("python3", [VIRTUAL_POINTER_PATH], {
-      env: { ...process.env, XDG_RUNTIME_DIR: SWAY_RUNTIME_DIR },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    this.virtualPointer.stderr?.on("data", (d: Buffer) => {
-      const text = d.toString().trim();
-      if (text) this.log.warn(`[virtual-pointer] ${text}`);
-    });
-    this.virtualPointer.on("exit", (code) => {
-      if (!this.disposed)
-        this.log.warn(`virtual-pointer exited unexpectedly code=${code}`);
-    });
-    // Wait up to 2s for the device to register before proceeding.
-    await new Promise<void>((resolve) => {
-      let done = false;
-      const finish = () => {
-        if (!done) {
-          done = true;
-          resolve();
-        }
-      };
-      this.virtualPointer!.stdout?.once("data", finish);
-      this.virtualPointer!.once("exit", finish);
-      setTimeout(finish, 2000);
-    });
-    this.log.info("Virtual pointer ready");
   }
 
   private async waitForSocket(): Promise<void> {
@@ -998,7 +957,6 @@ export class SwaySession implements vscode.Disposable {
     this.disposed = true;
     this.log.info("Disposing Sway session");
     this.eventSub?.kill();
-    this.virtualPointer?.kill("SIGTERM");
     this.pendingWindows.clear();
     for (const [conId, state] of this.windows) {
       this.log.info(`Killing window con_id=${conId}`);
