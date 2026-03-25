@@ -1,1 +1,1 @@
-C:/Users/sloik/Documents/Projects/deployery/.agents/AGENTS.md
+../.agents/AGENTS.md
