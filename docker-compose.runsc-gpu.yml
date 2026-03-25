@@ -1,8 +1,0 @@
-name: deployery
-
-services:
-  sandbox:
-    runtime: runsc-gpu
-    environment:
-      DEPLOYERY_SANDBOX_ISOLATION_MODE: hardened-runsc-gpu
-      DEPLOYERY_SANDBOX_RUNTIME: runsc-gpu

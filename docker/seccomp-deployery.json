@@ -1,0 +1,40 @@
+{
+  "defaultAction": "SCMP_ACT_ALLOW",
+  "syscalls": [
+    {
+      "names": [
+        "bpf",
+        "io_uring_setup",
+        "io_uring_enter",
+        "io_uring_register",
+        "kexec_load",
+        "kexec_file_load",
+        "reboot",
+        "keyctl",
+        "add_key",
+        "request_key",
+        "perf_event_open",
+        "open_by_handle_at",
+        "init_module",
+        "finit_module",
+        "delete_module",
+        "create_module",
+        "query_module",
+        "get_kernel_syms",
+        "acct",
+        "lookup_dcookie",
+        "nfsservctl",
+        "swapon",
+        "swapoff",
+        "pivot_root",
+        "vm86",
+        "vm86old",
+        "uselib",
+        "_sysctl",
+        "sysfs"
+      ],
+      "action": "SCMP_ACT_ERRNO",
+      "errnoRet": 1
+    }
+  ]
+}

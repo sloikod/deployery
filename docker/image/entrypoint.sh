@@ -7,8 +7,12 @@ export DEPLOYERY_SANDBOX_ROOTFS="${DEPLOYERY_SANDBOX_ROOTFS:-/}"
 export DEPLOYERY_SANDBOX_HOME="${DEPLOYERY_SANDBOX_HOME:-/home/user}"
 export DEPLOYERY_CODE_SERVER_PORT="${DEPLOYERY_CODE_SERVER_PORT:-13337}"
 export DEPLOYERY_SANDBOX_ISOLATION_MODE="${DEPLOYERY_SANDBOX_ISOLATION_MODE:-compatibility}"
-export DEPLOYERY_SANDBOX_RUNTIME="${DEPLOYERY_SANDBOX_RUNTIME:-docker}"
+export DEPLOYERY_SANDBOX_RUNTIME="${DEPLOYERY_SANDBOX_RUNTIME:-runc}"
 export PORT="${PORT:-3131}"
+
+if [ "${DEPLOYERY_SANDBOX_ISOLATION_MODE}" = "hardened-runsc" ] || [ "${DEPLOYERY_SANDBOX_ISOLATION_MODE}" = "hardened-runsc-gpu" ]; then
+  echo /usr/lib/libmonotonic-shim.so > /etc/ld.so.preload
+fi
 
 LEGACY_ROOTFS="/var/lib/deployery/sandbox-rootfs"
 FLATTENED_MIGRATION_MARKER="/var/lib/deployery/.flattened-rootfs-migrated"
@@ -22,9 +26,14 @@ log_runtime_summary() {
 }
 
 preflight_checks() {
-  if [ "${DEPLOYERY_SANDBOX_ISOLATION_MODE}" = "hardened-runsc" ]; then
-    echo "Deployery hardened mode requested. Ensure Docker is configured with the runsc runtime." >&2
-  fi
+  case "${DEPLOYERY_SANDBOX_ISOLATION_MODE}" in
+    hardened-runsc)
+      echo "Deployery hardened mode requested. Ensure Docker is configured with the runsc runtime." >&2
+      ;;
+    hardened-runsc-gpu)
+      echo "Deployery hardened GPU mode requested. Ensure Docker is configured with the runsc-gpu runtime." >&2
+      ;;
+  esac
 }
 
 migrate_legacy_rootfs() {

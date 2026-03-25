@@ -1,0 +1,16 @@
+name: deployery
+
+services:
+  sandbox:
+    runtime: runsc-gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${DEPLOYERY_SANDBOX_GPU_COUNT:-all}
+              capabilities: [gpu]
+    environment:
+      DEPLOYERY_SANDBOX_ISOLATION_MODE: hardened-runsc-gpu
+      DEPLOYERY_SANDBOX_RUNTIME: runsc-gpu
+      DEPLOYERY_SANDBOX_GPU_COUNT: ${DEPLOYERY_SANDBOX_GPU_COUNT:-all}
