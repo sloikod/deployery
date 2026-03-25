@@ -9,8 +9,8 @@ services:
       - "443:443"
     environment:
       # Set to your real domain for automatic HTTPS (e.g. deploy.example.com).
-      # Leave unset for plain HTTP on port 80 (local / IP-only access).
-      DEPLOYERY_DOMAIN: ${DEPLOYERY_DOMAIN:-localhost}
+      # Use http://localhost for local plain HTTP, or an http:// IP if needed.
+      DEPLOYERY_DOMAIN: ${DEPLOYERY_DOMAIN:-http://localhost}
     volumes:
       - caddy_data:/data
     depends_on:
@@ -21,24 +21,34 @@ services:
     hostname: deployery
     runtime: ${DEPLOYERY_SANDBOX_RUNTIME:-runc}
     shm_size: ${DEPLOYERY_SANDBOX_SHM_SIZE:-1gb}
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - FSETID
+      - KILL
+      - SETGID
+      - SETUID
+      - SETPCAP
+      - NET_BIND_SERVICE
+      - NET_RAW
+      - SYS_CHROOT
+      - MKNOD
+      - AUDIT_WRITE
+      - SETFCAP
     security_opt:
-      - seccomp=${DEPLOYERY_SANDBOX_SECCOMP_PROFILE:-unconfined}
+      - seccomp=${DEPLOYERY_SANDBOX_SECCOMP_PROFILE:-./docker/seccomp-deployery.json}
     tmpfs:
       - /tmp:rw,exec,nosuid,nodev,size=${DEPLOYERY_SANDBOX_TMP_SIZE:-8g}
       - /run:rw,nosuid,nodev,size=${DEPLOYERY_SANDBOX_RUN_SIZE:-128m}
     ports:
       # Bound to 127.0.0.1 - only reachable from this machine, not the internet.
       # Caddy proxies external traffic through ports 80/443 above.
-      - "127.0.0.1:3131:3131"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: ${DEPLOYERY_SANDBOX_GPU_COUNT:-0}
-              capabilities: [gpu]
+      - "127.0.0.1:${DEPLOYERY_HOST_PORT:-3131}:3131"
     environment:
-      DEPLOYERY_BASE_URL: http://localhost:3131
+      DEPLOYERY_BASE_URL: http://localhost:${DEPLOYERY_HOST_PORT:-3131}
       DB_TYPE: ${DB_TYPE:-sqlite}
       DB_SQLITE_PATH: ${DB_SQLITE_PATH:-/var/lib/deployery/data/deployery.sqlite}
       DB_POSTGRESDB_CONNECTION_URL: ${DB_POSTGRESDB_CONNECTION_URL:-}
