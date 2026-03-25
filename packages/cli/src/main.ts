@@ -16,7 +16,7 @@ const API_KEY = process.env.DEPLOYERY_API_KEY;
 const WORKFLOWS_DIR = path.join(
   process.env.HOME ?? process.cwd(),
   "Desktop",
-  "Workflows",
+  "workflows",
 );
 const VALID_NAME = /^[a-z][a-z0-9-]*$/;
 
