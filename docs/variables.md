@@ -16,7 +16,7 @@
 | `DEPLOYERY_SANDBOX_HOME` | `/home/user` | Home directory for the sandbox user. |
 | `DEPLOYERY_CODE_SERVER_PORT` | `13337` | Internal `code-server` bind port. |
 | `DEPLOYERY_SANDBOX_ISOLATION_MODE` | `compatibility` | Operator-visible deployment profile, for example `compatibility` or `hardened-runsc`. |
-| `DEPLOYERY_SANDBOX_RUNTIME` | `runc` | Container runtime name used by Docker, for example `runc` or `runsc`. |
+| `DEPLOYERY_SANDBOX_RUNTIME` | `runc` | Container runtime name used by Docker, for example `runc`, `runsc`, or an advanced custom alias such as `runsc-gpu`. |
 | `DEPLOYERY_SANDBOX_SECCOMP_PROFILE` | `unconfined` | Seccomp profile applied to the sandbox container. `unconfined` is the desktop-friendly default for plain Docker. |
 | `DEPLOYERY_SANDBOX_GPU_COUNT` | `0` | Number of NVIDIA GPUs to reserve for the sandbox. Use `all` to expose all host GPUs. |
 | `DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES` | `all` | NVIDIA device selection passed into the container runtime. Useful for choosing specific GPU indexes or UUIDs on GPU-enabled hosts. |

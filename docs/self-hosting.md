@@ -13,6 +13,9 @@ For production hardening on supported hosts, install
 [`runsc` / gVisor](https://gvisor.dev/docs/user_guide/quick_start/docker/)
 and enable it in Docker before starting Deployery.
 
+If you want a step-by-step validation flow for `runsc` or `runsc-gpu`, see
+[`docs/runsc-testing.md`](./runsc-testing.md).
+
 ## Local Source Build
 
 If you are running from this repository directly, use the source compose file:
@@ -77,8 +80,8 @@ Recommended shape today:
 - use `runc` for GPU-backed AI workloads
 - use `runsc` when host isolation matters more than maximum GPU and desktop
   compatibility
-- treat `runsc` + GPU as a future hardening path, not the primary supported GPU
-  path yet
+- treat `runsc` + GPU as an advanced operator path, not the primary supported
+  GPU path
 
 ### Host setup
 
@@ -227,3 +230,52 @@ volume data.
 `docker-compose.runsc.yml` remains available as a convenience override, but the
 primary deployment path is the main Compose file with
 `DEPLOYERY_SANDBOX_RUNTIME=runsc`.
+
+### Advanced: `runsc` + GPU
+
+This is intentionally not the primary documented GPU path.
+
+If you want GPU access under gVisor, the expectation is that you are an
+advanced operator managing the host runtime yourself.
+
+Deployery-side support is already present:
+
+- GPU requests are still controlled with `DEPLOYERY_SANDBOX_GPU_COUNT`
+- the sandbox runtime string can point at any Docker runtime name
+- this repo ships an optional [docker-compose.runsc-gpu.yml](../docker-compose.runsc-gpu.yml) override that expects a host runtime named `runsc-gpu`
+
+Host-side requirements are where the real complexity lives:
+
+1. The host must already support the plain Docker / NVIDIA path.
+2. The installed `runsc` version must support your NVIDIA driver:
+
+```bash
+runsc nvproxy list-supported-drivers
+```
+
+3. The Docker daemon must expose a runtime that launches `runsc` with GPU
+   support enabled via `--nvproxy`.
+
+The gVisor GPU docs are the source of truth here. Deployery does not try to
+track or abstract specific `runsc` / driver compatibility combinations for you.
+
+If the host runtime is set up correctly, advanced users can use:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.runsc-gpu.yml up -d --build
+```
+
+or:
+
+```bash
+DEPLOYERY_SANDBOX_RUNTIME=runsc-gpu \
+DEPLOYERY_SANDBOX_ISOLATION_MODE=hardened-runsc-gpu \
+DEPLOYERY_SANDBOX_GPU_COUNT=all \
+docker compose up -d --build
+```
+
+The main recommendation still stands:
+
+- use `runc` for the primary GPU path
+- use `runsc` + GPU only when you know you need it and are prepared to manage
+  the host-side complexity

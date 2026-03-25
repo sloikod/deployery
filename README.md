@@ -8,9 +8,8 @@ packages, across restarts.
 
 Basic project documentation lives in `./docs`:
 
-- `docs/getting-started.md`
 - `docs/architecture.md`
-- `docs/commands.md`
+- `docs/runsc-testing.md`
 - `docs/self-hosting.md`
 - `docs/variables.md`
 
