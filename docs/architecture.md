@@ -75,8 +75,7 @@ Deployery serves:
 
 The product term in this repo is `sandbox`.
 
-That refers to the persistent Linux environment the user works inside, not the
-old E2B multi-sandbox control-plane model.
+That refers to the persistent Linux environment the user works inside.
 
 ## Security Model
 

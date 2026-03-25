@@ -6,7 +6,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.js
 COPY apps ./apps
 COPY packages ./packages
 COPY docker ./docker
-COPY scripts ./scripts
 
 RUN corepack enable && pnpm install --frozen-lockfile
 RUN pnpm run build
@@ -74,6 +73,9 @@ RUN mkdir -p /etc/apt/keyrings \
         libgbm-dev \
     && rm -rf /var/lib/apt/lists/*
 
+COPY docker/image/assets/deployery/monotonic-shim.c /tmp/monotonic-shim.c
+RUN gcc -shared -fPIC -o /usr/lib/libmonotonic-shim.so /tmp/monotonic-shim.c -ldl && rm /tmp/monotonic-shim.c
+
 RUN bash -lc "set -euo pipefail \
     && mkdir -p /tmp/build-wayvnc \
     && cd /tmp/build-wayvnc \
@@ -107,8 +109,10 @@ COPY --from=builder /workspace/packages/extension-desktop/deployery-extension-de
 COPY docker/image/assets/Desktop /deployery/managed-assets/Desktop
 COPY docker/image/assets/code-server /deployery/managed-assets/code-server
 COPY docker/image/assets/code-server/branding /deployery/code-server-branding
+COPY docker/image/assets/deployery/cursor.tar.gz /tmp/cursor.tar.gz
+RUN mkdir -p /usr/share/icons && tar xzf /tmp/cursor.tar.gz -C /usr/share/icons && rm /tmp/cursor.tar.gz
+
 COPY docker/image/assets/deployery/wayland-env.sh /deployery/wayland-env.sh
-COPY docker/image/assets/deployery/virtual-pointer.py /deployery/virtual-pointer.py
 COPY docker/image/assets/deployery/fonts-local.conf /deployery/fonts-local.conf
 COPY docker/image/assets/deployery/start-code-server.sh /deployery/start-code-server.sh
 COPY docker/image/assets/deployery/start-sway.sh /deployery/start-sway.sh

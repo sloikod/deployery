@@ -16,7 +16,7 @@
 
 ## Workflows
 
-Store workflow manifests in `~/Desktop/Workflows/`, then sync them with:
+Store workflow manifests in `~/Desktop/workflows/`, then sync them with:
 
 ```bash
 deployery push <path>

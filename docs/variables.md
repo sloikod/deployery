@@ -4,8 +4,9 @@
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DEPLOYERY_DOMAIN` | `localhost` | Domain Caddy should serve. Leave as `localhost` for local HTTP. |
+| `DEPLOYERY_DOMAIN` | `http://localhost` | Address Caddy should serve. Use `http://...` for local plain HTTP, or a real domain for automatic HTTPS. |
 | `DEPLOYERY_BASE_URL` | `http://localhost:3131` | External base URL used when generating workflow resume and webhook URLs. |
+| `DEPLOYERY_HOST_PORT` | `3131` | Default localhost port that Docker Compose publishes for the API/code-server entrypoint. |
 | `PORT` | `3131` | HTTP port for the Deployery API process inside the container. |
 
 ## Sandbox runtime variables
@@ -17,8 +18,8 @@
 | `DEPLOYERY_CODE_SERVER_PORT` | `13337` | Internal `code-server` bind port. |
 | `DEPLOYERY_SANDBOX_ISOLATION_MODE` | `compatibility` | Operator-visible deployment profile, for example `compatibility` or `hardened-runsc`. |
 | `DEPLOYERY_SANDBOX_RUNTIME` | `runc` | Container runtime name used by Docker, for example `runc`, `runsc`, or an advanced custom alias such as `runsc-gpu`. |
-| `DEPLOYERY_SANDBOX_SECCOMP_PROFILE` | `unconfined` | Seccomp profile applied to the sandbox container. `unconfined` is the desktop-friendly default for plain Docker. |
-| `DEPLOYERY_SANDBOX_GPU_COUNT` | `0` | Number of NVIDIA GPUs to reserve for the sandbox. Use `all` to expose all host GPUs. |
+| `DEPLOYERY_SANDBOX_SECCOMP_PROFILE` | `./docker/seccomp-deployery.json` | Seccomp profile applied to the sandbox container. The default profile blocks kernel exploit syscalls while allowing all normal usage including Chrome and desktop apps. |
+| `DEPLOYERY_SANDBOX_GPU_COUNT` | `all` | Number of NVIDIA GPUs to reserve for the sandbox when using a GPU compose overlay. Only takes effect with `docker-compose.gpu.yml` or `docker-compose.hardened-gpu.yml`. |
 | `DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES` | `all` | NVIDIA device selection passed into the container runtime. Useful for choosing specific GPU indexes or UUIDs on GPU-enabled hosts. |
 | `DEPLOYERY_SANDBOX_NVIDIA_DRIVER_CAPABILITIES` | `compute,utility` | NVIDIA driver capabilities exposed to the sandbox. The default is aimed at CUDA / AI workloads. |
 | `DEPLOYERY_SANDBOX_SHM_SIZE` | `1gb` | Shared memory size for the outer sandbox container. |

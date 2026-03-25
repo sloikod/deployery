@@ -1,31 +1,30 @@
 # DEPLOYERY_DOMAIN controls how Caddy presents itself:
-#   - unset / "localhost": plain HTTP on port 80 (local dev)
+#   - default "http://localhost": plain HTTP on port 80 (local dev)
 #   - real domain (e.g. "deploy.example.com"): automatic HTTPS via Let's Encrypt
-{$DEPLOYERY_DOMAIN:localhost} {
+{$DEPLOYERY_DOMAIN:http://localhost} {
+	# Rate limit per client IP.
+	# 3000 req/min (50/sec) allows heavy AI agent usage while still blocking
+	# floods and bots. Only sustained automated abuse will ever hit this.
+	rate_limit {
+		zone per_ip {
+			key {remote.host}
+			events 3000
+			window 1m
+		}
+	}
 
-    # Rate limit per client IP.
-    # 3000 req/min (50/sec) allows heavy AI agent usage while still blocking
-    # floods and bots. Only sustained automated abuse will ever hit this.
-    rate_limit {
-        zone per_ip {
-            key    {remote.host}
-            events 3000
-            window 1m
-        }
-    }
+	# Proxy everything to the deployery API.
+	reverse_proxy sandbox:3131 {
+		# Flush immediately - required for server-sent events (log streaming)
+		# to deliver each line in real time rather than buffering.
+		flush_interval -1
 
-    # Proxy everything to the deployery API.
-    reverse_proxy sandbox:3131 {
-        # Flush immediately - required for server-sent events (log streaming)
-        # to deliver each line in real time rather than buffering.
-        flush_interval -1
-
-        # No timeouts on active connections. noVNC sessions and log streams
-        # can run for hours - cutting them off would break the live desktop
-        # and interrupt long workflow runs.
-        transport http {
-            read_timeout  0
-            write_timeout 0
-        }
-    }
+		# No timeouts on active connections. noVNC sessions and log streams
+		# can run for hours - cutting them off would break the live desktop
+		# and interrupt long workflow runs.
+		transport http {
+			read_timeout 0
+			write_timeout 0
+		}
+	}
 }

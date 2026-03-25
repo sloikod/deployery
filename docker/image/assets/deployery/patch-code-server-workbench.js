@@ -5,6 +5,8 @@ const path = require("path");
 const rootfs = process.env.DEPLOYERY_CODE_SERVER_ROOTFS || "";
 const searchRoot = path.join(rootfs, "/usr/lib/code-server");
 const brandName = "Deployery";
+const patchStartMarker = "<!-- deployery-workbench-patch:start -->";
+const patchEndMarker = "<!-- deployery-workbench-patch:end -->";
 const replacementRules = [
   [/^code-server$/i, brandName],
   [/^welcome to code-server$/i, `Welcome to ${brandName}`],
@@ -18,17 +20,12 @@ function findWorkbenchHtml() {
   return execSync(cmd, { encoding: "utf8" }).trim();
 }
 
-function main() {
-  const workbenchHtml = findWorkbenchHtml();
-  if (!workbenchHtml) {
-    console.error("patch-code-server-workbench: workbench.html not found");
-    process.exit(1);
-  }
-
-  const injection = [
+function buildInjection() {
+  return [
+    patchStartMarker,
     "<script>",
     "(function () {",
-    "  const css = '.home-bar,.window-appicon,.editor-group-watermark{display:none!important;}';",
+    "  const css = '.editor-group-watermark{display:none!important;}';",
     '  const style = document.createElement("style");',
     "  style.textContent = css;",
     "  document.head.appendChild(style);",
@@ -97,18 +94,38 @@ function main() {
     "  }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });",
     "})();",
     "</script>",
+    patchEndMarker,
     "</head>",
   ].join("\n");
+}
 
-  const html = fs.readFileSync(workbenchHtml, "utf8");
-  if (html.includes("normalizeInstalledHeaders")) {
-    console.log(
-      `patch-code-server-workbench: already patched ${workbenchHtml}`,
-    );
-    return;
+function upsertInjection(html, injection) {
+  const markerPattern = new RegExp(
+    `${patchStartMarker}[\\s\\S]*?${patchEndMarker}\\s*`,
+  );
+  const legacyPattern =
+    /<script>\s*\(function \(\) \{[\s\S]*?function normalizeInstalledHeaders\(root\) \{[\s\S]*?function brandText\(root\) \{[\s\S]*?new MutationObserver\(\(mutations\) => \{[\s\S]*?\}\)\.observe\(document\.documentElement, \{ childList: true, subtree: true, characterData: true \}\);\s*\}\)\(\);\s*<\/script>\s*/;
+
+  let nextHtml = html.replace(markerPattern, "");
+  nextHtml = nextHtml.replace(legacyPattern, "");
+
+  if (!nextHtml.includes("</head>")) {
+    throw new Error("patch-code-server-workbench: </head> not found");
   }
 
-  fs.writeFileSync(workbenchHtml, html.replace("</head>", injection));
+  return nextHtml.replace("</head>", injection);
+}
+
+function main() {
+  const workbenchHtml = findWorkbenchHtml();
+  if (!workbenchHtml) {
+    console.error("patch-code-server-workbench: workbench.html not found");
+    process.exit(1);
+  }
+
+  const injection = buildInjection();
+  const html = fs.readFileSync(workbenchHtml, "utf8");
+  fs.writeFileSync(workbenchHtml, upsertInjection(html, injection));
   console.log(`patch-code-server-workbench: patched ${workbenchHtml}`);
 }
 

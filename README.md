@@ -9,7 +9,7 @@ packages, across restarts.
 Basic project documentation lives in `./docs`:
 
 - `docs/architecture.md`
-- `docs/runsc-testing.md`
+- `docs/running.md`
 - `docs/self-hosting.md`
 - `docs/variables.md`
 
@@ -33,6 +33,14 @@ pnpm build
 pnpm dev
 ```
 
+Common repo commands:
+
+```bash
+pnpm check
+pnpm test
+pnpm format
+```
+
 The sandbox persists key system paths directly (`/usr`, `/etc`, `/var`, `/opt`,
 and `/home/user`) and serves:
 
@@ -42,20 +50,37 @@ and `/home/user`) and serves:
 The default plain-Docker profile is:
 
 ```bash
-docker compose up -d --build
+pnpm docker:up
 ```
 
-For stronger host isolation on supported Linux hosts, use the same Compose file
-with `runsc`:
+Equivalent raw Compose command:
 
 ```bash
-DEPLOYERY_SANDBOX_RUNTIME=runsc DEPLOYERY_SANDBOX_ISOLATION_MODE=hardened-runsc docker compose up -d --build
+docker compose up --build
+```
+
+For stronger host isolation on supported Linux hosts:
+
+```bash
+pnpm docker:up:hardened
+```
+
+Equivalent raw Compose command:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.hardened.yml up --build
 ```
 
 For NVIDIA-backed AI workloads on plain Docker / `runc`:
 
 ```bash
-DEPLOYERY_SANDBOX_GPU_COUNT=all docker compose up -d --build
+pnpm docker:up:gpu
+```
+
+Equivalent raw Compose command:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build
 ```
 
 ## Current Scope

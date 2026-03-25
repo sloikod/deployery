@@ -17,8 +17,8 @@ export SDL_VIDEODRIVER=wayland
 # Chrome/Electron: auto-select Wayland when WAYLAND_DISPLAY is set
 export ELECTRON_OZONE_PLATFORM_HINT=auto
 
-# Software rendering - E2B VMs have no GPU; force Mesa llvmpipe so OpenGL
-# apps (Chrome, GTK, Qt) render via CPU instead of crashing on DRM access.
+# Software rendering - force Mesa llvmpipe so OpenGL apps (Chrome, GTK, Qt)
+# render via CPU instead of crashing on DRM access.
 export LIBGL_ALWAYS_SOFTWARE=1
 export GALLIUM_DRIVER=llvmpipe
 
@@ -26,10 +26,8 @@ export GALLIUM_DRIVER=llvmpipe
 export PULSE_SERVER=unix:/tmp/pulse-runtime/pulse/native
 
 # Cursor theme for toolkit-rendered cursors (GTK/Qt Wayland cursor surfaces).
-# Note: the Sway compositor seat uses transparent-cursor (set in sway config)
-# so wayvnc never captures a baked-in cursor from screencopy frames. Adwaita
-# here applies to cursor-shape RFB events sent by wayvnc from app cursor surfaces.
-export XCURSOR_THEME=Adwaita
+# Same theme as the Sway compositor seat (set in sway config).
+export XCURSOR_THEME=macOS-Monterey
 export XCURSOR_SIZE=24
 
 # Cap Node.js heap so user processes GC aggressively instead of ballooning

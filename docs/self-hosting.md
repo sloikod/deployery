@@ -13,8 +13,8 @@ For production hardening on supported hosts, install
 [`runsc` / gVisor](https://gvisor.dev/docs/user_guide/quick_start/docker/)
 and enable it in Docker before starting Deployery.
 
-If you want a step-by-step validation flow for `runsc` or `runsc-gpu`, see
-[`docs/runsc-testing.md`](./runsc-testing.md).
+For a step-by-step guide covering all deployment modes (regular, hardened, GPU),
+see [`docs/running.md`](./running.md).
 
 ## Local Source Build
 
@@ -32,16 +32,17 @@ Open `http://localhost:3131` after the sandbox finishes booting.
 
 Deployery supports two runtime profiles through the same Compose file:
 
-- compatibility mode
+- regular mode
   - plain Docker with the `runc` runtime
-  - seccomp defaults to `unconfined` so Chromium, Electron, and similar
-    desktop apps can use their own namespace sandboxing
-  - easiest to self-host
-  - useful for local development and broad compatibility
+  - a custom seccomp profile blocks kernel exploit syscalls while allowing all
+    normal usage including Chrome, Electron, and desktop apps
+  - works on any host, any PaaS, any VPS with zero extra setup
 - hardened mode
-  - Docker with `runsc`
+  - Docker with `runsc` (gVisor)
+  - intercepts every syscall through a userspace kernel for defense in depth
   - recommended for production hosts that execute untrusted user workloads or
     rogue agents
+  - requires gVisor installed on the host
 
 The sandbox remains intentionally powerful in both modes. Users can install
 packages, run `sudo`, and modify the full persistent guest `/`. Hardening is
@@ -52,16 +53,25 @@ about containing the sandbox from the outside, not restricting it from within.
 Plain Docker / `runc` is the default:
 
 ```bash
-docker compose up -d --build
+pnpm docker:up
 ```
 
-To switch the same Compose file to gVisor on a host that has `runsc`
-configured:
+Equivalent raw Compose command:
 
 ```bash
-DEPLOYERY_SANDBOX_RUNTIME=runsc \
-DEPLOYERY_SANDBOX_ISOLATION_MODE=hardened-runsc \
-docker compose up -d --build
+docker compose up --build
+```
+
+To switch to gVisor on a host that has `runsc` configured:
+
+```bash
+pnpm docker:up:hardened
+```
+
+Equivalent raw Compose command:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.hardened.yml up --build
 ```
 
 The runtime mode is surfaced at:
@@ -107,13 +117,14 @@ docker run --rm --gpus all ubuntu nvidia-smi
 Expose all GPUs:
 
 ```bash
-DEPLOYERY_SANDBOX_GPU_COUNT=all docker compose up -d --build
+pnpm docker:up:gpu
 ```
 
 Expose one GPU:
 
 ```bash
-DEPLOYERY_SANDBOX_GPU_COUNT=1 docker compose up -d --build
+DEPLOYERY_SANDBOX_GPU_COUNT=1 \
+pnpm docker:up:gpu
 ```
 
 Choose specific devices by index or UUID:
@@ -121,7 +132,7 @@ Choose specific devices by index or UUID:
 ```bash
 DEPLOYERY_SANDBOX_GPU_COUNT=all \
 DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES=0 \
-docker compose up -d --build
+pnpm docker:up:gpu
 ```
 
 By default Deployery requests `compute,utility` NVIDIA driver capabilities,
@@ -177,11 +188,14 @@ Set `DEPLOYERY_DOMAIN` to a real domain before starting Caddy if you want
 automatic HTTPS:
 
 ```bash
-DEPLOYERY_DOMAIN=deploy.example.com docker compose up -d --build
+DEPLOYERY_DOMAIN=deploy.example.com pnpm docker:up
 ```
 
 Point your DNS A record at the host first. Caddy will request a Let's Encrypt
 certificate automatically once the domain resolves publicly.
+
+For local development, keep the default `DEPLOYERY_DOMAIN=http://localhost` so
+Caddy stays on plain HTTP instead of generating a localhost certificate.
 
 ## Published Images
 
@@ -200,9 +214,9 @@ Deployery is designed around a hostile-sandbox assumption:
 
 Recommended host posture:
 
-- use `runsc` where available
-- understand that plain `runc` mode intentionally relaxes seccomp to keep
-  general-purpose desktop app sandboxes working
+- use `runsc` where available for defense in depth
+- the default `runc` mode uses a custom seccomp profile that blocks kernel
+  exploit syscalls while keeping desktop apps working
 - keep Deployery bound behind Caddy or another reverse proxy
 - avoid exposing internal sandbox services directly
 - do not mount the Docker socket into Deployery
@@ -227,7 +241,7 @@ volume data.
 
 ## gVisor
 
-`docker-compose.runsc.yml` remains available as a convenience override, but the
+`docker-compose.hardened.yml` remains available as a convenience override, but the
 primary deployment path is the main Compose file with
 `DEPLOYERY_SANDBOX_RUNTIME=runsc`.
 
@@ -242,7 +256,7 @@ Deployery-side support is already present:
 
 - GPU requests are still controlled with `DEPLOYERY_SANDBOX_GPU_COUNT`
 - the sandbox runtime string can point at any Docker runtime name
-- this repo ships an optional [docker-compose.runsc-gpu.yml](../docker-compose.runsc-gpu.yml) override that expects a host runtime named `runsc-gpu`
+- this repo ships an optional [docker-compose.hardened-gpu.yml](../docker-compose.hardened-gpu.yml) override that expects a host runtime named `runsc-gpu`
 
 Host-side requirements are where the real complexity lives:
 
@@ -262,16 +276,16 @@ track or abstract specific `runsc` / driver compatibility combinations for you.
 If the host runtime is set up correctly, advanced users can use:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.runsc-gpu.yml up -d --build
+pnpm docker:up:hardened:gpu
 ```
 
-or:
+or with environment variables and the GPU overlay:
 
 ```bash
 DEPLOYERY_SANDBOX_RUNTIME=runsc-gpu \
 DEPLOYERY_SANDBOX_ISOLATION_MODE=hardened-runsc-gpu \
 DEPLOYERY_SANDBOX_GPU_COUNT=all \
-docker compose up -d --build
+pnpm docker:up:gpu
 ```
 
 The main recommendation still stands:
