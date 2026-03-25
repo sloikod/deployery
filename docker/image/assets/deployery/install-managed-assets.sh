@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SANDBOX_HOME="${DEPLOYERY_SANDBOX_HOME:-/home/user}"
+DEFAULT_WORKSPACE="${DEPLOYERY_CODE_SERVER_DEFAULT_WORKSPACE:-${SANDBOX_HOME}/Desktop}"
 MANAGED_ASSETS_DIR="/deployery/managed-assets"
 BRANDING_DIR="/deployery/code-server-branding"
 SANDBOX_USER_HOME="${SANDBOX_HOME}"
@@ -22,6 +23,43 @@ rsync -a --ignore-existing "${MANAGED_ASSETS_DIR}/Desktop/" "${SANDBOX_USER_HOME
 if [ ! -f "${SANDBOX_USER_HOME}/.local/share/code-server/User/settings.json" ]; then
   cp "${MANAGED_ASSETS_DIR}/code-server/settings.json" "${SANDBOX_USER_HOME}/.local/share/code-server/User/settings.json"
 fi
+
+CODE_SERVER_STATE_PATH="${SANDBOX_USER_HOME}/.local/share/code-server/coder.json"
+CODE_SERVER_STATE_PATH="${CODE_SERVER_STATE_PATH}" \
+SANDBOX_HOME="${SANDBOX_HOME}" \
+DEFAULT_WORKSPACE="${DEFAULT_WORKSPACE}" \
+node <<'EOF'
+const fs = require("fs");
+
+const statePath = process.env.CODE_SERVER_STATE_PATH;
+const sandboxHome = process.env.SANDBOX_HOME;
+const defaultWorkspace = process.env.DEFAULT_WORKSPACE;
+
+let state = {};
+
+if (fs.existsSync(statePath)) {
+  try {
+    state = JSON.parse(fs.readFileSync(statePath, "utf8"));
+  } catch {
+    state = {};
+  }
+}
+
+state.query ??= {};
+state.lastVisited ??= {};
+
+if (!state.query.folder || state.query.folder === sandboxHome) {
+  state.query.folder = defaultWorkspace;
+}
+
+if (!state.lastVisited.url || state.lastVisited.url === sandboxHome) {
+  state.lastVisited.url = defaultWorkspace;
+  state.lastVisited.workspace = false;
+}
+
+fs.writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
+EOF
+
 cp /deployery/wayland-env.sh /etc/profile.d/deployery-wayland.sh
 
 cat > /etc/apt/apt.conf.d/80deployery-network <<'EOF'
