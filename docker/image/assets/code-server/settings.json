@@ -1,5 +1,5 @@
 {
-  "window.menuBarVisibility": "classic",
+  "window.menuBarVisibility": "visible",
   "workbench.preferredLightColorTheme": "Default Light+",
   "workbench.preferredDarkColorTheme": "Default Dark Modern",
   "window.autoDetectColorScheme": true,
