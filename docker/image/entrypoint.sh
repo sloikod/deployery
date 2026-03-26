@@ -28,10 +28,14 @@ log_runtime_summary() {
 preflight_checks() {
   case "${DEPLOYERY_SANDBOX_ISOLATION_MODE}" in
     hardened-runsc)
-      echo "Deployery hardened mode requested. Ensure Docker is configured with the runsc runtime." >&2
+      if [ "${DEPLOYERY_SANDBOX_RUNTIME}" != "runsc" ]; then
+        echo "Deployery hardened mode requested, but DEPLOYERY_SANDBOX_RUNTIME=${DEPLOYERY_SANDBOX_RUNTIME}. Expected runsc." >&2
+      fi
       ;;
     hardened-runsc-gpu)
-      echo "Deployery hardened GPU mode requested. Ensure Docker is configured with the runsc-gpu runtime." >&2
+      if [ "${DEPLOYERY_SANDBOX_RUNTIME}" != "runsc-gpu" ]; then
+        echo "Deployery hardened GPU mode requested, but DEPLOYERY_SANDBOX_RUNTIME=${DEPLOYERY_SANDBOX_RUNTIME}. Expected runsc-gpu." >&2
+      fi
       ;;
   esac
 }

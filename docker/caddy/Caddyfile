@@ -1,3 +1,9 @@
+{
+	servers :80 {
+		protocols h1
+	}
+}
+
 # DEPLOYERY_DOMAIN controls how Caddy presents itself:
 #   - default "http://localhost": plain HTTP on port 80 (local dev)
 #   - real domain (e.g. "deploy.example.com"): automatic HTTPS via Let's Encrypt
