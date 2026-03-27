@@ -32,5 +32,11 @@
 			read_timeout 0
 			write_timeout 0
 		}
+
+		# Probe backend health so Caddy stops routing immediately when the
+		# sandbox is down rather than accumulating failed requests.
+		health_uri /healthz
+		health_interval 10s
+		health_timeout 5s
 	}
 }
