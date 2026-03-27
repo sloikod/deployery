@@ -17,14 +17,14 @@
 | `DEPLOYERY_SANDBOX_HOME` | `/home/user` | Home directory for the sandbox user. |
 | `DEPLOYERY_CODE_SERVER_PORT` | `13337` | Internal `code-server` bind port. |
 | `DEPLOYERY_SANDBOX_ISOLATION_MODE` | `compatibility` | Operator-visible deployment profile, for example `compatibility` or `hardened-runsc`. |
-| `DEPLOYERY_SANDBOX_RUNTIME` | `runc` | Container runtime name used by Docker, for example `runc`, `runsc`, or an advanced custom alias such as `runsc-gpu`. |
+| `DEPLOYERY_SANDBOX_RUNTIME` | `runc` | Container runtime name used by Docker, for example `runc` or `runsc`. |
 | `DEPLOYERY_SANDBOX_SECCOMP_PROFILE` | `./docker/seccomp-deployery.json` | Seccomp profile applied to the sandbox container. The default profile blocks kernel exploit syscalls while allowing all normal usage including Chrome and desktop apps. |
-| `DEPLOYERY_SANDBOX_GPU_COUNT` | `all` | Number of NVIDIA GPUs to reserve for the sandbox when using a GPU compose overlay. Only takes effect with `docker-compose.gpu.yml` or `docker-compose.hardened-gpu.yml`. |
+| `DEPLOYERY_SANDBOX_GPU_COUNT` | `all` | Number of NVIDIA GPUs to reserve for the sandbox when GPU support is enabled for the `runc` path. In practice this takes effect when `docker-compose.gpu.yml` is active, whether selected explicitly or by `DEPLOYERY_GPU=auto|on`. |
 | `DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES` | `all` | NVIDIA device selection passed into the container runtime. Useful for choosing specific GPU indexes or UUIDs on GPU-enabled hosts. |
 | `DEPLOYERY_SANDBOX_NVIDIA_DRIVER_CAPABILITIES` | `compute,utility` | NVIDIA driver capabilities exposed to the sandbox. The default is aimed at CUDA / AI workloads. |
 | `DEPLOYERY_SANDBOX_SHM_SIZE` | `1gb` | Shared memory size for the outer sandbox container. |
 | `DEPLOYERY_SANDBOX_TMP_SIZE` | `8g` | `tmpfs` size for the outer sandbox container `/tmp`. |
-| `DEPLOYERY_SANDBOX_RUN_SIZE` | `128m` | `tmpfs` size for the outer sandbox container `/run`. |
+| `DEPLOYERY_SANDBOX_RUN_SIZE` | `128m` | `tmpfs` size for the outer sandbox container `/run` (mounted with `exec` so `s6-overlay` can bootstrap). |
 
 ## Database selection
 

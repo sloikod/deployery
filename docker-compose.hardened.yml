@@ -6,3 +6,4 @@ services:
     environment:
       DEPLOYERY_SANDBOX_ISOLATION_MODE: hardened-runsc
       DEPLOYERY_SANDBOX_RUNTIME: runsc
+      LD_PRELOAD: /usr/lib/libmonotonic-shim.so

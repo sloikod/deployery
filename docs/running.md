@@ -57,15 +57,13 @@ pnpm docker:down:clean
 
 ## Deployment Modes
 
-Deployery ships as a single Docker image with four deployment modes controlled
-by compose overlays:
+Deployery ships as a single Docker image with two runtime modes. The `runc`
+mode can optionally expose GPUs.
 
 | Mode | Command | Runtime | GPU | Host setup |
 |------|---------|---------|-----|------------|
-| Regular | `pnpm docker:up` | `runc` | No | None |
-| GPU | `pnpm docker:up:gpu` | `runc` | Yes | NVIDIA toolkit |
+| Standard | `pnpm docker:up` | `runc` | Auto | None / NVIDIA toolkit |
 | Hardened | `pnpm docker:up:hardened` | `runsc` | No | gVisor |
-| Hardened + GPU | `pnpm docker:up:hardened:gpu` | `runsc-gpu` | Yes | gVisor + NVIDIA |
 
 ## Package Script Reference
 
@@ -73,14 +71,10 @@ Root-level `pnpm` scripts:
 
 | Category | Command | Purpose |
 |------|---------|---------|
-| Docker | `pnpm docker:up` | Start regular mode |
-| Docker | `pnpm docker:up:clean` | Recreate regular mode after deleting volumes |
-| Docker | `pnpm docker:up:gpu` | Start GPU mode |
-| Docker | `pnpm docker:up:gpu:clean` | Recreate GPU mode after deleting volumes |
+| Docker | `pnpm docker:up` | Start standard mode (`runc`, GPU auto-detect) |
+| Docker | `pnpm docker:up:clean` | Recreate standard mode after deleting volumes |
 | Docker | `pnpm docker:up:hardened` | Start hardened mode |
 | Docker | `pnpm docker:up:hardened:clean` | Recreate hardened mode after deleting volumes |
-| Docker | `pnpm docker:up:hardened:gpu` | Start hardened GPU mode |
-| Docker | `pnpm docker:up:hardened:gpu:clean` | Recreate hardened GPU mode after deleting volumes |
 | Docker | `pnpm docker:build` | Build the Compose images without starting containers |
 | Docker | `pnpm docker:build:clean` | Delete volumes, then rebuild the Compose images |
 | Docker | `pnpm docker:logs` | Follow sandbox logs |
@@ -97,7 +91,7 @@ Root-level `pnpm` scripts:
 | Workspace | `pnpm test:integration` | Run integration-test tasks |
 | Workspace | `pnpm format` | Format TS, TSX, JS, MJS, JSON, YML, and YAML files |
 
-All four modes use the same image. The overlays only change the container
+Both modes use the same image. The overlays only change the container
 runtime and device reservations.
 
 ### Regular (recommended default)
@@ -150,8 +144,7 @@ Success looks like:
 
 ## GPU Setup
 
-GPU support requires the NVIDIA Container Toolkit on the host. This applies to
-both regular and hardened GPU modes.
+GPU support requires the NVIDIA Container Toolkit on the host.
 
 ### 1. Verify the host GPU
 
@@ -163,7 +156,12 @@ If this fails, fix the NVIDIA driver first.
 
 ### 2. Install NVIDIA Container Toolkit
 
+This package comes from NVIDIA's apt repository, not the default Ubuntu
+archive.
+
 ```bash
+sudo apt-get update
+sudo apt-get install -y curl gnupg
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
   sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
 curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
@@ -188,19 +186,19 @@ This must work before starting Deployery with GPU.
 All GPUs:
 
 ```bash
-pnpm docker:up:gpu
+DEPLOYERY_GPU=on pnpm docker:up
 ```
 
 Single GPU:
 
 ```bash
-DEPLOYERY_SANDBOX_GPU_COUNT=1 pnpm docker:up:gpu
+DEPLOYERY_GPU=on DEPLOYERY_SANDBOX_GPU_COUNT=1 pnpm docker:up
 ```
 
 Specific GPU by index:
 
 ```bash
-DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES=0 pnpm docker:up:gpu
+DEPLOYERY_GPU=on DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES=0 pnpm docker:up
 ```
 
 ## Hardened Mode Setup (gVisor)
@@ -245,45 +243,22 @@ pnpm docker:up:hardened
 
 gVisor's clock implementation can return non-monotonic timestamps, which crashes
 Node.js. Deployery includes an `LD_PRELOAD` shim (`monotonic-shim.c`) that
-clamps `clock_gettime` to never go backwards. This is loaded automatically in
-hardened mode. If you see clock-related assertion crashes in the logs, the shim
-is not being loaded — check the entrypoint.
+clamps `clock_gettime` to never go backwards. The hardened compose overlay sets
+`LD_PRELOAD=/usr/lib/libmonotonic-shim.so` so the shim is active from process
+start for every service in the container. If you see clock-related assertion
+crashes in the logs, verify the hardened overlay is in use and `LD_PRELOAD` is
+present inside the container.
 
-## Hardened + GPU Setup
+## Hardened + GPU
 
-This combines gVisor with NVIDIA GPU access. Complete both the GPU setup and
-the hardened mode setup above first, then add the GPU runtime alias:
-
-```bash
-sudo runsc install --runtime runsc-gpu -- --nvproxy
-sudo systemctl restart docker
-```
-
-Verify both runtimes are registered:
+Deployery no longer ships a hardened GPU mode. The supported GPU path is the
+plain Docker / `runc` overlay:
 
 ```bash
-docker info --format '{{json .Runtimes}}'
+DEPLOYERY_GPU=on pnpm docker:up
 ```
 
-Check driver compatibility:
-
-```bash
-runsc nvproxy list-supported-drivers
-```
-
-If your driver is not listed, the `runsc` and driver versions are incompatible.
-
-Smoke test:
-
-```bash
-docker run --rm --runtime=runsc-gpu --gpus all ubuntu nvidia-smi -L
-```
-
-Start Deployery:
-
-```bash
-pnpm docker:up:hardened:gpu
-```
+If you need gVisor isolation, use `pnpm docker:up:hardened` without GPU.
 
 ## Common Problems
 
@@ -296,6 +271,10 @@ sudo usermod -aG docker "$USER"
 newgrp docker
 ```
 
+If you already added your user to the `docker` group earlier, the current shell
+may still be using the old group list. Run `newgrp docker` in the same terminal,
+or sign out and back in, then retry.
+
 ### `unknown or invalid runtime name: runsc`
 
 gVisor is not registered with Docker:
@@ -305,19 +284,15 @@ sudo runsc install
 sudo systemctl restart docker
 ```
 
-### `unknown or invalid runtime name: runsc-gpu`
-
-The GPU runtime alias is not registered:
-
-```bash
-sudo runsc install --runtime runsc-gpu -- --nvproxy
-sudo systemctl restart docker
-```
-
 ### `could not select device driver "nvidia"`
 
-NVIDIA Container Toolkit is not installed or Docker was not restarted after
-configuration. Re-run the GPU setup section.
+NVIDIA Container Toolkit is not installed, Docker was not restarted after
+configuration, or `/etc/docker/daemon.json` lost the NVIDIA runtime settings.
+Re-run the GPU setup section, then verify:
+
+```bash
+docker run --rm --gpus all ubuntu nvidia-smi -L
+```
 
 ### `runsc nvproxy list-supported-drivers` does not list your driver
 
@@ -346,5 +321,4 @@ The logs show the isolation mode and runtime on startup.
 | `docker-compose.yml` | Base (regular mode) |
 | `docker-compose.gpu.yml` | GPU overlay for runc |
 | `docker-compose.hardened.yml` | gVisor overlay |
-| `docker-compose.hardened-gpu.yml` | gVisor + GPU overlay |
 | `docker-compose.hub.yml` | Pre-built images from registry |

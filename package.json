@@ -11,14 +11,10 @@
     "node": ">=22"
   },
   "scripts": {
-    "docker:up": "docker compose up --build",
-    "docker:up:clean": "docker compose down -v && docker compose up --build",
-    "docker:up:gpu": "docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build",
-    "docker:up:gpu:clean": "docker compose -f docker-compose.yml -f docker-compose.gpu.yml down -v && docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build",
-    "docker:up:hardened": "docker compose -f docker-compose.yml -f docker-compose.hardened.yml up --build",
-    "docker:up:hardened:clean": "docker compose -f docker-compose.yml -f docker-compose.hardened.yml down -v && docker compose -f docker-compose.yml -f docker-compose.hardened.yml up --build",
-    "docker:up:hardened:gpu": "docker compose -f docker-compose.yml -f docker-compose.hardened-gpu.yml up --build",
-    "docker:up:hardened:gpu:clean": "docker compose -f docker-compose.yml -f docker-compose.hardened-gpu.yml down -v && docker compose -f docker-compose.yml -f docker-compose.hardened-gpu.yml up --build",
+    "docker:up": "bash ./docker/scripts/compose-up.sh",
+    "docker:up:clean": "bash ./docker/scripts/compose-up.sh clean",
+    "docker:up:hardened": "bash ./docker/scripts/preflight-runsc.sh hardened && docker compose -f docker-compose.yml -f docker-compose.hardened.yml up --build",
+    "docker:up:hardened:clean": "bash ./docker/scripts/preflight-runsc.sh hardened && docker compose -f docker-compose.yml -f docker-compose.hardened.yml down -v && docker compose -f docker-compose.yml -f docker-compose.hardened.yml up --build",
     "docker:logs": "docker compose logs -f sandbox",
     "docker:build": "docker compose build",
     "docker:build:clean": "docker compose down -v && docker compose build",

@@ -53,10 +53,21 @@ The default plain-Docker profile is:
 pnpm docker:up
 ```
 
-Equivalent raw Compose command:
+This uses plain Docker / `runc` and auto-enables the GPU override when the host
+has both `nvidia-smi` and Docker's `nvidia` runtime available.
+
+Base raw Compose command:
 
 ```bash
 docker compose up --build
+```
+
+When GPU auto-detect succeeds, Deployery also adds `-f docker-compose.gpu.yml`.
+
+Force CPU-only startup:
+
+```bash
+DEPLOYERY_GPU=off pnpm docker:up
 ```
 
 For stronger host isolation on supported Linux hosts:
@@ -71,11 +82,13 @@ Equivalent raw Compose command:
 docker compose -f docker-compose.yml -f docker-compose.hardened.yml up --build
 ```
 
-For NVIDIA-backed AI workloads on plain Docker / `runc`:
+Force GPU-backed startup on plain Docker / `runc`:
 
 ```bash
-pnpm docker:up:gpu
+DEPLOYERY_GPU=on pnpm docker:up
 ```
+
+This fails fast if the host is not ready for NVIDIA passthrough.
 
 Equivalent raw Compose command:
 

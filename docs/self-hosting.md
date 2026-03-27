@@ -88,20 +88,26 @@ the default plain-Docker / `runc` profile.
 Recommended shape today:
 
 - use `runc` for GPU-backed AI workloads
-- use `runsc` when host isolation matters more than maximum GPU and desktop
-  compatibility
-- treat `runsc` + GPU as an advanced operator path, not the primary supported
-  GPU path
+- use `runsc` when host isolation matters more than GPU access
 
 ### Host setup
 
 On the Linux host:
 
 1. Install an NVIDIA driver supported by your GPU.
-2. Install the NVIDIA Container Toolkit.
+2. Add NVIDIA's apt repository and install the NVIDIA Container Toolkit.
 3. Configure Docker for NVIDIA containers:
 
 ```bash
+sudo apt-get update
+sudo apt-get install -y curl gnupg
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
+  sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
@@ -117,14 +123,14 @@ docker run --rm --gpus all ubuntu nvidia-smi
 Expose all GPUs:
 
 ```bash
-pnpm docker:up:gpu
+DEPLOYERY_GPU=on pnpm docker:up
 ```
 
 Expose one GPU:
 
 ```bash
 DEPLOYERY_SANDBOX_GPU_COUNT=1 \
-pnpm docker:up:gpu
+DEPLOYERY_GPU=on pnpm docker:up
 ```
 
 Choose specific devices by index or UUID:
@@ -132,7 +138,7 @@ Choose specific devices by index or UUID:
 ```bash
 DEPLOYERY_SANDBOX_GPU_COUNT=all \
 DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES=0 \
-pnpm docker:up:gpu
+DEPLOYERY_GPU=on pnpm docker:up
 ```
 
 By default Deployery requests `compute,utility` NVIDIA driver capabilities,
@@ -245,51 +251,6 @@ volume data.
 primary deployment path is the main Compose file with
 `DEPLOYERY_SANDBOX_RUNTIME=runsc`.
 
-### Advanced: `runsc` + GPU
-
-This is intentionally not the primary documented GPU path.
-
-If you want GPU access under gVisor, the expectation is that you are an
-advanced operator managing the host runtime yourself.
-
-Deployery-side support is already present:
-
-- GPU requests are still controlled with `DEPLOYERY_SANDBOX_GPU_COUNT`
-- the sandbox runtime string can point at any Docker runtime name
-- this repo ships an optional [docker-compose.hardened-gpu.yml](../docker-compose.hardened-gpu.yml) override that expects a host runtime named `runsc-gpu`
-
-Host-side requirements are where the real complexity lives:
-
-1. The host must already support the plain Docker / NVIDIA path.
-2. The installed `runsc` version must support your NVIDIA driver:
-
-```bash
-runsc nvproxy list-supported-drivers
-```
-
-3. The Docker daemon must expose a runtime that launches `runsc` with GPU
-   support enabled via `--nvproxy`.
-
-The gVisor GPU docs are the source of truth here. Deployery does not try to
-track or abstract specific `runsc` / driver compatibility combinations for you.
-
-If the host runtime is set up correctly, advanced users can use:
-
-```bash
-pnpm docker:up:hardened:gpu
-```
-
-or with environment variables and the GPU overlay:
-
-```bash
-DEPLOYERY_SANDBOX_RUNTIME=runsc-gpu \
-DEPLOYERY_SANDBOX_ISOLATION_MODE=hardened-runsc-gpu \
-DEPLOYERY_SANDBOX_GPU_COUNT=all \
-pnpm docker:up:gpu
-```
-
-The main recommendation still stands:
-
-- use `runc` for the primary GPU path
-- use `runsc` + GPU only when you know you need it and are prepared to manage
-  the host-side complexity
+Deployery does not ship a supported `runsc` + GPU mode. Use
+`DEPLOYERY_GPU=on pnpm docker:up` for GPU workloads, or
+`pnpm docker:up:hardened` when gVisor isolation matters more than GPU access.
