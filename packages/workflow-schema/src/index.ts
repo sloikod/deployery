@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-export const WORKFLOW_SCHEMA_URL = "https://deployery.com/workflow.schema.json";
+export const JSON_SCHEMA_DRAFT_2020_12_URL =
+  "https://json-schema.org/draft/2020-12/schema";
 
 const jsonLiteralSchema = z.union([
   z.string(),
@@ -180,17 +181,23 @@ export const workflowManifestSchema = z
   })
   .strict();
 
+export const workflowManifestJsonSchema: Record<string, unknown> = {
+  ...z.toJSONSchema(workflowManifestSchema, {
+    target: "draft-2020-12",
+    io: "input",
+    reused: "ref",
+  }),
+  $schema: JSON_SCHEMA_DRAFT_2020_12_URL,
+  title: "Deployery Workflow Manifest",
+};
+
 export type WorkflowManifest = z.infer<typeof workflowManifestSchema>;
 export type WorkflowTrigger = z.infer<typeof workflowTriggerUnionSchema>;
 export type WorkflowStep = z.infer<typeof workflowStepUnionSchema>;
 export type WebhookTrigger = z.infer<typeof webhookTriggerSchema>;
 
 export function parseWorkflowManifest(input: unknown): WorkflowManifest {
-  const manifest = workflowManifestSchema.parse(input);
-  return {
-    ...manifest,
-    $schema: manifest.$schema ?? WORKFLOW_SCHEMA_URL,
-  };
+  return workflowManifestSchema.parse(input);
 }
 
 export function safeParseWorkflowManifest(input: unknown) {

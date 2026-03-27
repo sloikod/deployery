@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  WORKFLOW_SCHEMA_URL,
   commandStepSchema,
   concurrencySettingsSchema,
   inferWebhookTrigger,
@@ -18,6 +17,7 @@ import {
   webhookTriggerSchema,
   webhookVerificationSchema,
   workflowManifestSchema,
+  workflowManifestJsonSchema,
   workflowStepSchema,
   workflowTriggerSchema,
 } from "./index";
@@ -427,9 +427,9 @@ describe("workflowManifestSchema", () => {
 });
 
 describe("parseWorkflowManifest", () => {
-  it("injects schema URL when $schema is absent", () => {
+  it("leaves $schema absent when it is omitted", () => {
     const result = parseWorkflowManifest(MINIMAL_MANIFEST);
-    expect(result.$schema).toBe(WORKFLOW_SCHEMA_URL);
+    expect(result.$schema).toBeUndefined();
   });
 
   it("preserves existing $schema", () => {
@@ -473,7 +473,10 @@ describe("safeParseWorkflowManifest", () => {
 
 describe("stripWorkflowSchema", () => {
   it("removes $schema field", () => {
-    const manifest = parseWorkflowManifest(MINIMAL_MANIFEST);
+    const manifest = parseWorkflowManifest({
+      ...MINIMAL_MANIFEST,
+      $schema: "https://custom.schema",
+    });
     const stripped = stripWorkflowSchema(manifest);
     expect("$schema" in stripped).toBe(false);
   });
@@ -483,6 +486,23 @@ describe("stripWorkflowSchema", () => {
     const stripped = stripWorkflowSchema(manifest);
     expect(stripped.triggers).toEqual(manifest.triggers);
     expect(stripped.steps).toEqual(manifest.steps);
+  });
+});
+
+describe("workflowManifestJsonSchema", () => {
+  it("exports a draft 2020-12 JSON schema", () => {
+    expect(workflowManifestJsonSchema.$schema).toBe(
+      "https://json-schema.org/draft/2020-12/schema",
+    );
+    expect(workflowManifestJsonSchema.title).toBe(
+      "Deployery Workflow Manifest",
+    );
+  });
+
+  it("includes top-level manifest properties", () => {
+    expect(workflowManifestJsonSchema.type).toBe("object");
+    expect(workflowManifestJsonSchema.properties).toHaveProperty("triggers");
+    expect(workflowManifestJsonSchema.properties).toHaveProperty("steps");
   });
 });
 

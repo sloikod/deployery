@@ -1,5 +1,4 @@
 {
-  "$schema": "https://deployery.com/workflow.schema.json",
   "triggers": [
     {
       "type": "manual"

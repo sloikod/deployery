@@ -3,10 +3,10 @@ import fs from "fs";
 import path from "path";
 
 import {
-  WORKFLOW_SCHEMA_URL,
   normalizeWorkflowName,
   parseWorkflowManifest,
   safeParseWorkflowManifest,
+  stripWorkflowSchema,
 } from "@deployery/workflow-schema";
 
 const BASE_URL = (
@@ -211,7 +211,7 @@ async function push(filter?: string) {
       method: "POST",
       body: JSON.stringify({
         name: workflow.name,
-        manifest,
+        manifest: stripWorkflowSchema(manifest),
       }),
     });
     console.log(`pushed: ${workflow.name}`);
@@ -238,13 +238,12 @@ async function pull(filter?: string) {
   fs.mkdirSync(WORKFLOWS_DIR, { recursive: true });
 
   for (const workflow of selected) {
-    const manifest = {
-      ...workflow.manifest,
-      $schema: WORKFLOW_SCHEMA_URL,
-    };
     const filePath =
       targetPath ?? path.join(WORKFLOWS_DIR, `${workflow.name}.json`);
-    fs.writeFileSync(filePath, `${JSON.stringify(manifest, null, 2)}\n`);
+    fs.writeFileSync(
+      filePath,
+      `${JSON.stringify(parseWorkflowManifest(workflow.manifest), null, 2)}\n`,
+    );
     console.log(
       `pulled: ${workflow.name} -> ${path.relative(process.cwd(), filePath)}`,
     );
@@ -492,10 +491,7 @@ function updatePinnedValue(
     step.pinned_input = value as never;
   }
 
-  fs.writeFileSync(
-    target.path,
-    `${JSON.stringify(target.manifest, null, 2)}\n`,
-  );
+  fs.writeFileSync(target.path, `${JSON.stringify(target.manifest, null, 2)}\n`);
 }
 
 async function pin(name: string, stepName: string, side: "input" | "output") {
@@ -540,10 +536,7 @@ async function unpin(name: string, stepName: string, side: "input" | "output") {
     delete step.pinned_input;
   }
 
-  fs.writeFileSync(
-    target.path,
-    `${JSON.stringify(target.manifest, null, 2)}\n`,
-  );
+  fs.writeFileSync(target.path, `${JSON.stringify(target.manifest, null, 2)}\n`);
   console.log(`unpinned: ${stepName}.${side}`);
 }
 
