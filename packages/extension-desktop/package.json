@@ -13,7 +13,12 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onOpenExternalUri:http",
+    "onOpenExternalUri:https"
+  ],
+  "enabledApiProposals": [
+    "externalUriOpener"
   ],
   "main": "./out/extension.js",
   "contributes": {

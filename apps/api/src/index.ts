@@ -2,6 +2,7 @@ import http, { ServerResponse, type IncomingMessage } from "http";
 import { URL } from "url";
 import fs from "fs";
 import path from "path";
+import { spawn } from "child_process";
 
 import httpProxy from "http-proxy";
 import { collectDefaultMetrics, Counter, Registry } from "prom-client";
@@ -72,6 +73,96 @@ function parseOptionalJson(buffer: Buffer): unknown {
   } catch {
     return null;
   }
+}
+
+function parseExportFile(filePath: string): Record<string, string> {
+  if (!fs.existsSync(filePath)) {
+    return {};
+  }
+
+  const exports: Record<string, string> = {};
+  for (const line of fs.readFileSync(filePath, "utf8").split(/\r?\n/u)) {
+    const match = /^\s*export\s+([A-Z0-9_]+)=(.*)\s*$/u.exec(line);
+    if (!match) {
+      continue;
+    }
+
+    let value = match[2].trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    exports[match[1]] = value;
+  }
+
+  return exports;
+}
+
+function isSupportedExternalUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function getSandboxBrowserEnv(sandboxHomePath: string): Record<string, string> {
+  return {
+    HOME: sandboxHomePath,
+    USER: "user",
+    LOGNAME: "user",
+    SHELL: "/bin/bash",
+    PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    LANG: "en_US.UTF-8",
+    XDG_CONFIG_HOME: path.join(sandboxHomePath, ".config"),
+    XDG_DATA_HOME: path.join(sandboxHomePath, ".local/share"),
+    XDG_RUNTIME_DIR: "/tmp/sway-runtime",
+    WAYLAND_DISPLAY: "wayland-1",
+    DISPLAY: ":0",
+    XDG_SESSION_TYPE: "wayland",
+    GDK_BACKEND: "wayland,x11",
+    QT_QPA_PLATFORM: "wayland;xcb",
+    SDL_VIDEODRIVER: "wayland",
+    ELECTRON_OZONE_PLATFORM_HINT: "auto",
+    LIBGL_ALWAYS_SOFTWARE: "1",
+    GALLIUM_DRIVER: "llvmpipe",
+    PULSE_SERVER: "unix:/tmp/pulse-runtime/pulse/native",
+    XCURSOR_THEME: "macOS-Monterey",
+    XCURSOR_SIZE: "24",
+    NODE_OPTIONS: "--max-old-space-size=4096",
+    ...parseExportFile(path.join(sandboxHomePath, ".config/deployery/env")),
+  };
+}
+
+function launchSandboxDefaultBrowser(
+  url: string,
+  sandboxHomePath: string,
+): void {
+  const env = getSandboxBrowserEnv(sandboxHomePath);
+  const child = spawn(
+    "/usr/bin/sudo",
+    [
+      "-u",
+      "user",
+      "/usr/bin/env",
+      "-i",
+      ...Object.entries(env).map(([key, value]) => `${key}=${value}`),
+      "/usr/bin/xdg-open",
+      url,
+    ],
+    {
+      detached: true,
+      stdio: "ignore",
+    },
+  );
+
+  child.on("error", (error) => {
+    console.error(`Failed to launch sandbox browser for ${url}: ${error}`);
+  });
+  child.unref();
 }
 
 function getRequestOrigin(request: IncomingMessage): string {
@@ -257,6 +348,48 @@ async function main(): Promise<void> {
         const body = await metricsRegistry.metrics();
         sendText(response, 200, body, metricsRegistry.contentType);
         finish("/metrics", 200);
+        return;
+      }
+
+      if (method === "POST" && pathname === "/api/v1/open-external") {
+        const origin = request.headers.origin;
+        if (typeof origin === "string" && origin !== getRequestOrigin(request)) {
+          sendJson(response, {
+            statusCode: 403,
+            body: {
+              error: "cross-origin requests are not allowed",
+            },
+          });
+          finish("/api/v1/open-external", 403);
+          return;
+        }
+
+        const body = parseOptionalJson(await readRequestBody(request)) as {
+          url?: unknown;
+        } | null;
+        if (
+          !body ||
+          typeof body.url !== "string" ||
+          !isSupportedExternalUrl(body.url)
+        ) {
+          sendJson(response, {
+            statusCode: 400,
+            body: {
+              error: "a valid http or https url is required",
+            },
+          });
+          finish("/api/v1/open-external", 400);
+          return;
+        }
+
+        launchSandboxDefaultBrowser(body.url, sandboxHomePath);
+        sendJson(response, {
+          statusCode: 202,
+          body: {
+            ok: true,
+          },
+        });
+        finish("/api/v1/open-external", 202);
         return;
       }
 

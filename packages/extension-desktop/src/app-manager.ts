@@ -10,6 +10,7 @@ import {
   PULSE_TCP_PORT,
   PULSE_RUNTIME,
   SAMPLE_RATE,
+  launchUrlInDefaultBrowser,
 } from "./utils";
 
 export class DesktopManager implements vscode.Disposable {
@@ -29,6 +30,7 @@ export class DesktopManager implements vscode.Disposable {
   private audioStarted = false;
   private audioMuted = false;
   private readonly statusBar: vscode.StatusBarItem;
+  private readonly sessionReady: Promise<void>;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -47,9 +49,10 @@ export class DesktopManager implements vscode.Disposable {
     this.startAudioPipeline().catch((e) =>
       this.log.warn(`Audio pipeline: ${e}`),
     );
-    this.startSession().catch((e) =>
-      this.log.error(`Sway session failed: ${e}`),
-    );
+    this.sessionReady = this.startSession().catch((e) => {
+      this.log.error(`Sway session failed: ${e}`);
+      throw e;
+    });
     this.log.info("DesktopManager started");
   }
 
@@ -216,6 +219,17 @@ export class DesktopManager implements vscode.Disposable {
       "deployery-desktop.audioMuted",
       true,
     );
+  }
+
+  async openExternalUrl(url: string): Promise<void> {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new Error(`Unsupported external URL scheme: ${parsed.protocol}`);
+    }
+
+    await this.sessionReady;
+    await launchUrlInDefaultBrowser(parsed.toString());
+    this.log.info(`Opened external URL in sandbox browser: ${parsed}`);
   }
 
   // --- Status bar ---

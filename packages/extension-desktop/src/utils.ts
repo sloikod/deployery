@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 
 export const SWAY_RUNTIME_DIR = "/tmp/sway-runtime";
 export const SWAY_CONFIG_PATH = "/tmp/sway-config";
@@ -31,6 +31,25 @@ export function runSilent(cmd: string): Promise<string> {
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function launchUrlInDefaultBrowser(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn("xdg-open", [url], {
+      detached: true,
+      stdio: "ignore",
+      env: {
+        ...process.env,
+        HOME: process.env.HOME ?? "/home/user",
+        XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME ?? "/home/user/.config",
+        XDG_DATA_HOME:
+          process.env.XDG_DATA_HOME ?? "/home/user/.local/share",
+      },
+    });
+    child.once("error", reject);
+    child.unref();
+    resolve();
+  });
 }
 
 function resolveProxyPath(port: number): string {
