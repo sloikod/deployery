@@ -225,7 +225,11 @@ async function main(): Promise<void> {
       }
 
       if (method === "GET" && pathname === "/healthz/readiness") {
-        const ready = fs.existsSync(sandboxRootfsPath) && engineReady;
+        const codeServerUp = await fetch(
+          `http://127.0.0.1:${codeServerPort}/`,
+          { signal: AbortSignal.timeout(2000) },
+        ).then(() => true).catch(() => false);
+        const ready = fs.existsSync(sandboxRootfsPath) && engineReady && codeServerUp;
         sendJson(response, {
           statusCode: ready ? 200 : 503,
           body: {
