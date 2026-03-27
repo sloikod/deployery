@@ -18,6 +18,33 @@ export DEPLOYERY_BASE_URL="${DEPLOYERY_BASE_URL:-http://localhost:3131}"
 export VSCODE_PROXY_URI="./proxy/{{port}}"
 EOF
 
+if [ -f /usr/share/applications/google-chrome.desktop ]; then
+  XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config" \
+  XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share" \
+  HOME="${SANDBOX_USER_HOME}" \
+  xdg-mime default google-chrome.desktop x-scheme-handler/http
+
+  XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config" \
+  XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share" \
+  HOME="${SANDBOX_USER_HOME}" \
+  xdg-mime default google-chrome.desktop x-scheme-handler/https
+
+  XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config" \
+  XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share" \
+  HOME="${SANDBOX_USER_HOME}" \
+  xdg-mime default google-chrome.desktop text/html
+
+  XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config" \
+  XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share" \
+  HOME="${SANDBOX_USER_HOME}" \
+  xdg-mime default google-chrome.desktop application/xhtml+xml
+
+  XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config" \
+  XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share" \
+  HOME="${SANDBOX_USER_HOME}" \
+  xdg-settings set default-web-browser google-chrome.desktop || true
+fi
+
 rsync -a --ignore-existing "${MANAGED_ASSETS_DIR}/Desktop/" "${SANDBOX_USER_HOME}/Desktop/"
 
 if [ ! -f "${SANDBOX_USER_HOME}/.local/share/code-server/User/settings.json" ]; then
