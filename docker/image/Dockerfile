@@ -26,10 +26,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rsync \
     python3 \
     sudo \
-    tini \
     xz-utils \
     git \
     && rm -rf /var/lib/apt/lists/*
+
+ARG S6_OVERLAY_VERSION=3.2.2.0
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp/s6-overlay-noarch.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-symlinks-noarch.tar.xz /tmp/s6-overlay-symlinks-noarch.tar.xz
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz \
+    && tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz \
+    && tar -C / -Jxpf /tmp/s6-overlay-symlinks-noarch.tar.xz \
+    && rm /tmp/s6-overlay-*.tar.xz
 
 RUN mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
@@ -119,6 +127,7 @@ COPY docker/image/assets/deployery/start-sway.sh /deployery/start-sway.sh
 COPY docker/image/assets/deployery/install-managed-assets.sh /deployery/install-managed-assets.sh
 COPY docker/image/assets/deployery/patch-code-server-workbench.js /deployery/patch-code-server-workbench.js
 COPY docker/image/entrypoint.sh /entrypoint.sh
+COPY docker/image/assets/s6-rc.d/ /etc/s6-overlay/s6-rc.d/
 
 RUN mkdir -p /home/user/Desktop /home/user/.config/deployery /home/user/.local/share/code-server/User \
     && chown -R user:user /home/user \
@@ -126,7 +135,13 @@ RUN mkdir -p /home/user/Desktop /home/user/.config/deployery /home/user/.local/s
     && node /deployery/patch-code-server-workbench.js \
     && su - user -c 'code-server --user-data-dir /home/user/.local/share/code-server --install-extension thang-nm.flow-icons || true' \
     && su - user -c 'code-server --user-data-dir /home/user/.local/share/code-server --install-extension /deployery/extensions/deployery-extension-desktop.vsix || true' \
-    && chmod +x /entrypoint.sh /deployery/start-code-server.sh /deployery/start-sway.sh /deployery/install-managed-assets.sh /deployery/wayland-env.sh /deployery/patch-code-server-workbench.js
+    && chmod +x /entrypoint.sh /deployery/start-code-server.sh /deployery/start-sway.sh /deployery/install-managed-assets.sh /deployery/wayland-env.sh /deployery/patch-code-server-workbench.js \
+    && chmod +x /etc/s6-overlay/s6-rc.d/init-deployery/up \
+        /etc/s6-overlay/s6-rc.d/sway/run \
+        /etc/s6-overlay/s6-rc.d/sway/finish \
+        /etc/s6-overlay/s6-rc.d/code-server/run \
+        /etc/s6-overlay/s6-rc.d/code-server/finish
 
 EXPOSE 3131
-ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
+ENTRYPOINT ["/init"]
+CMD ["node", "/deployery/apps/api/dist/index.js"]

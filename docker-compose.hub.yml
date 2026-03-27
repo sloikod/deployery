@@ -42,7 +42,7 @@ services:
       - seccomp=${DEPLOYERY_SANDBOX_SECCOMP_PROFILE:-./docker/seccomp-deployery.json}
     tmpfs:
       - /tmp:rw,exec,nosuid,nodev,size=${DEPLOYERY_SANDBOX_TMP_SIZE:-8g}
-      - /run:rw,nosuid,nodev,size=${DEPLOYERY_SANDBOX_RUN_SIZE:-128m}
+      - /run:rw,exec,nosuid,nodev,size=${DEPLOYERY_SANDBOX_RUN_SIZE:-128m}
     ports:
       # Bound to 127.0.0.1 - only reachable from this machine, not the internet.
       # Caddy proxies external traffic through ports 80/443 above.
@@ -66,6 +66,7 @@ services:
       DEPLOYERY_SANDBOX_GPU_COUNT: ${DEPLOYERY_SANDBOX_GPU_COUNT:-0}
       DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES: ${DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES:-all}
       DEPLOYERY_SANDBOX_NVIDIA_DRIVER_CAPABILITIES: ${DEPLOYERY_SANDBOX_NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
+      S6_KEEP_ENV: "1"
       NVIDIA_VISIBLE_DEVICES: ${DEPLOYERY_SANDBOX_NVIDIA_VISIBLE_DEVICES:-all}
       NVIDIA_DRIVER_CAPABILITIES: ${DEPLOYERY_SANDBOX_NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
     volumes:
