@@ -125,6 +125,8 @@ COPY docker/image/assets/deployery/fonts-local.conf /deployery/fonts-local.conf
 COPY docker/image/assets/deployery/start-code-server.sh /deployery/start-code-server.sh
 COPY docker/image/assets/deployery/start-sway.sh /deployery/start-sway.sh
 COPY docker/image/assets/deployery/install-managed-assets.sh /deployery/install-managed-assets.sh
+COPY docker/image/assets/deployery/google-chrome-initial-preferences.json /deployery/google-chrome-initial-preferences.json
+COPY docker/image/assets/deployery/google-chrome-managed-policies.json /deployery/google-chrome-managed-policies.json
 COPY docker/image/assets/deployery/patch-code-server-workbench.js /deployery/patch-code-server-workbench.js
 COPY docker/image/entrypoint.sh /entrypoint.sh
 COPY docker/image/assets/s6-rc.d/ /etc/s6-overlay/s6-rc.d/

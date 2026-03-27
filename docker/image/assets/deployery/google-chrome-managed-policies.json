@@ -1,0 +1,9 @@
+{
+  "MetricsReportingEnabled": false,
+  "PromotionsEnabled": false,
+  "DefaultSearchProviderEnabled": true,
+  "DefaultSearchProviderName": "Google",
+  "DefaultSearchProviderKeyword": "google.com",
+  "DefaultSearchProviderSearchURL": "{google:baseURL}search?q={searchTerms}&{google:RLZ}{google:originalQueryForSuggestion}{google:assistedQueryStats}{google:searchFieldtrialParameter}{google:searchClient}{google:sourceId}ie={inputEncoding}",
+  "DefaultSearchProviderSuggestURL": "{google:baseURL}complete/search?output=chrome&q={searchTerms}"
+}

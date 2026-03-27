@@ -6,6 +6,8 @@ DEFAULT_WORKSPACE="${DEPLOYERY_CODE_SERVER_DEFAULT_WORKSPACE:-${SANDBOX_HOME}/De
 MANAGED_ASSETS_DIR="/deployery/managed-assets"
 BRANDING_DIR="/deployery/code-server-branding"
 SANDBOX_USER_HOME="${SANDBOX_HOME}"
+CHROME_INITIAL_PREFERENCES_SOURCE="/deployery/google-chrome-initial-preferences.json"
+CHROME_MANAGED_POLICIES_SOURCE="/deployery/google-chrome-managed-policies.json"
 
 mkdir -p "${SANDBOX_USER_HOME}/Desktop"
 mkdir -p "${SANDBOX_USER_HOME}/.local/share/code-server/User"
@@ -19,30 +21,20 @@ export VSCODE_PROXY_URI="./proxy/{{port}}"
 EOF
 
 if [ -f /usr/share/applications/google-chrome.desktop ]; then
-  XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config" \
-  XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share" \
-  HOME="${SANDBOX_USER_HOME}" \
-  xdg-mime default google-chrome.desktop x-scheme-handler/http
+  mkdir -p /etc/opt/chrome/policies/managed
+  install -m 0644 "${CHROME_INITIAL_PREFERENCES_SOURCE}" /opt/google/chrome/initial_preferences
+  install -m 0644 "${CHROME_MANAGED_POLICIES_SOURCE}" /etc/opt/chrome/policies/managed/deployery.json
 
-  XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config" \
-  XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share" \
-  HOME="${SANDBOX_USER_HOME}" \
-  xdg-mime default google-chrome.desktop x-scheme-handler/https
-
-  XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config" \
-  XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share" \
-  HOME="${SANDBOX_USER_HOME}" \
-  xdg-mime default google-chrome.desktop text/html
-
-  XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config" \
-  XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share" \
-  HOME="${SANDBOX_USER_HOME}" \
-  xdg-mime default google-chrome.desktop application/xhtml+xml
-
-  XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config" \
-  XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share" \
-  HOME="${SANDBOX_USER_HOME}" \
-  xdg-settings set default-web-browser google-chrome.desktop || true
+  (
+    export XDG_CONFIG_HOME="${SANDBOX_USER_HOME}/.config"
+    export XDG_DATA_HOME="${SANDBOX_USER_HOME}/.local/share"
+    export HOME="${SANDBOX_USER_HOME}"
+    xdg-mime default google-chrome.desktop x-scheme-handler/http
+    xdg-mime default google-chrome.desktop x-scheme-handler/https
+    xdg-mime default google-chrome.desktop text/html
+    xdg-mime default google-chrome.desktop application/xhtml+xml
+    xdg-settings set default-web-browser google-chrome.desktop || true
+  )
 fi
 
 rsync -a --ignore-existing "${MANAGED_ASSETS_DIR}/Desktop/" "${SANDBOX_USER_HOME}/Desktop/"
