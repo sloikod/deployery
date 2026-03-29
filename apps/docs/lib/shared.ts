@@ -6,7 +6,7 @@ export const siteUrl = 'https://deployery.com';
 
 // fill this with your actual GitHub info, for example:
 export const gitConfig = {
-  user: 'fuma-nama',
-  repo: 'fumadocs',
+  user: 'sloikod',
+  repo: 'deployery',
   branch: 'main',
 };
