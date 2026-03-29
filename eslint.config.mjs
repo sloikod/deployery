@@ -9,6 +9,7 @@ export default defineConfig(
       '**/dist/**',
       '**/out/**',
       '**/.next/**',
+      '**/.source/**',
       '**/.turbo/**',
       '**/coverage/**',
       '**/*.d.ts',
@@ -17,9 +18,14 @@ export default defineConfig(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   {
-    files: ['**/*.{js,mjs,cjs,ts,mts,cts}'],
+    files: ['**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts}'],
     languageOptions: {
       ecmaVersion: 'latest',
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
     },
   },
   {

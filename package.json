@@ -7,7 +7,8 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "check": "eslint . --cache && vitest run"
+    "check": "turbo run check && eslint . --cache && vitest run",
+    "dev": "turbo run dev"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

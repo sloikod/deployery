@@ -5,6 +5,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "out/**", ".next/**"]
     },
+    "check": {
+      "dependsOn": ["^check"],
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true
