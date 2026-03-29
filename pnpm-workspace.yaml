@@ -3,3 +3,5 @@ packages:
   - packages/*
 
 linkWorkspacePackages: false
+patchedDependencies:
+  fumadocs-ui@16.7.7: patches/fumadocs-ui@16.7.7.patch
