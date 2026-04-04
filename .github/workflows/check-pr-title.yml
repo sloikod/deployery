@@ -26,4 +26,3 @@ jobs:
             echo "Got: $TITLE"
             exit 1
           fi
-

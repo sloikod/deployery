@@ -62,13 +62,13 @@ for (const file of files) {
 }
 
 if (violations.length === 0) {
-  console.log('All matched files use no LLM patterns!');
+  console.log('No LLM-style characters found.');
   process.exit(0);
 }
 
 for (const { file, hits } of violations) {
   const rel = file.replace(process.cwd() + '\\', '').replace(process.cwd() + '/', '');
-  console.log(`\nllm: ${rel}`);
+  console.log(`\n  ${rel}`);
   for (const { lineNo, text } of hits) {
     console.log(`  ${String(lineNo).padStart(4)}  ${text}`);
   }
@@ -91,8 +91,10 @@ if (shouldWrite) {
   for (const { file, content } of violations) {
     writeFileSync(file, content, 'utf8');
   }
-  console.log(`\nllm: fixed ${violations.length} file(s)`);
+  console.log(`\nFixed ${violations.length} file(s).`);
 } else {
-  console.error('\nllm: re-run with -y to fix automatically, or run: pnpm llm');
+  const green = process.stderr.isTTY ? '\x1b[32m' : '';
+  const reset = process.stderr.isTTY ? '\x1b[0m' : '';
+  console.error(`\n[${green}fix${reset}] ${violations.length} file(s) contain LLM-style characters. Run 'pnpm format'.`);
   process.exitCode = 1;
 }

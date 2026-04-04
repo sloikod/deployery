@@ -28,7 +28,7 @@ All contributors must sign the CLA before their PR can be merged. The process is
    I have read the CLA Document and I hereby sign the CLA
    ```
 
-3. The CLA bot records your signature and marks the status check as passed. You only need to do this once — your signature covers all future PRs.
+3. The CLA bot records your signature and marks the status check as passed. You only need to do this once - your signature covers all future PRs.
 
 In short: you keep ownership of your work, but you give the Deployery project broad rights to use, distribute, and relicense your contribution, and you confirm that you have the right to submit it.
 

@@ -9,10 +9,10 @@
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
-		"check": "turbo run check lint && eslint . --cache && prettier --check . && node scripts/llm.mjs -n && node scripts/periods.mjs -n && vitest run",
+		"check": "turbo run check lint && eslint . --cache && node scripts/format.mjs -n && node scripts/llm.mjs -n && node scripts/periods.mjs -n && vitest run",
 		"check:llm": "node scripts/llm.mjs -n",
 		"check:periods": "node scripts/periods.mjs -n",
-		"check:prettier": "prettier --check .",
+		"check:prettier": "node scripts/format.mjs -n",
 		"format": "node scripts/llm.mjs -y && node scripts/periods.mjs -y && prettier --write .",
 		"format:llm": "node scripts/llm.mjs -y",
 		"format:periods": "node scripts/periods.mjs -y",
