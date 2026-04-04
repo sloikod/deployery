@@ -1,6 +1,6 @@
 name: Feature Request
 description: Suggest a new feature or improvement for Deployery
-labels: ["enhancement", "needs-triage"]
+labels: ['enhancement', 'needs-triage']
 body:
   - type: markdown
     attributes:
