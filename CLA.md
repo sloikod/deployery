@@ -2,6 +2,10 @@
 
 _Adapted from the Apache Software Foundation Individual Contributor License Agreement v2.2._
 
+By commenting **"I have read the CLA Document and I hereby sign the CLA"** on your pull request, **you ("Contributor") agree to the following terms** for any past and future Contributions submitted to the **Deployery project**.
+
+---
+
 ## 1. Definitions
 
 **"Contribution"** means any original work of authorship that You intentionally submit to the Deployery project for inclusion - including code, documentation, tests, configuration, and other material. For purposes of this definition, "submitted" means any form of electronic, verbal, or written communication sent to the project or its representatives, but excluding communication conspicuously marked or otherwise designated in writing by You as "Not a Contribution."
@@ -10,7 +14,7 @@ _Adapted from the Apache Software Foundation Individual Contributor License Agre
 
 ## 2. Acceptance
 
-By submitting a Contribution to the Deployery project (including via pull request, patch, or any other mechanism), You accept and agree to the terms of this agreement for all present and future Contributions.
+You accept and agree to the terms of this agreement by posting the comment described above on your pull request. Your signature is recorded automatically and applies to all present and future Contributions.
 
 ## 3. Copyright License
 
