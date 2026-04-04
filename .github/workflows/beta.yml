@@ -1,0 +1,25 @@
+name: Beta
+
+on:
+  # Waits for CI to pass on the beta branch rather than triggering on push
+  # directly. This ensures the beta image is never built from broken code.
+  # Workflow YAML cannot import @deployery/constants, so protected
+  # branch names stay duplicated here on purpose.
+  workflow_run:
+    workflows: ['CI']
+    branches: [beta]
+    types: [completed]
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+jobs:
+  publish-images:
+    if: github.event.workflow_run.conclusion == 'success'
+    uses: ./.github/workflows/release.yml
+    with:
+      mode: beta
+      push_enabled: true
+    secrets: inherit

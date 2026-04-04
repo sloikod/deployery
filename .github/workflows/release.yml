@@ -1,0 +1,253 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      mode:
+        required: true
+        type: string
+      push_enabled:
+        required: false
+        type: boolean
+        default: true
+      branch_name:
+        required: false
+        type: string
+    outputs:
+      primary_tag:
+        description: Primary published image tag
+        value: ${{ jobs.image-manifest.outputs.primary_tag }}
+      release_type:
+        description: Release type used for this build
+        value: ${{ jobs.determine-build-context.outputs.release_type }}
+      version:
+        description: Resolved release version
+        value: ${{ jobs.determine-build-context.outputs.version }}
+  # Manual dispatch always runs in branch mode - produces a multi-platform
+  # preview image tagged by branch name and SHA, pushed to GHCR only.
+  # To publish a beta or stable release use the beta branch or a vX.Y.Z tag.
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: Branch name to publish as a preview
+        required: false
+        type: string
+      push_enabled:
+        description: Push the preview image to GHCR
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  id-token: write
+  attestations: write
+
+# Job flow:
+#   1. determine-build-context  - resolves the version number and target platforms
+#   2. build-and-push           - builds one image per platform (amd64, arm64) and pushes them
+#   3. image-manifest        - combines per-platform images into a single multi-arch manifest
+#   4. security-scan            - runs Trivy on the published image (beta/stable only)
+
+jobs:
+  determine-build-context:
+    runs-on: ubuntu-latest
+    outputs:
+      build_matrix: ${{ steps.context.outputs.build_matrix }}
+      platforms: ${{ steps.context.outputs.platforms }}
+      push_to_docker: ${{ steps.context.outputs.push_to_docker }}
+      release_type: ${{ steps.context.outputs.release_type }}
+      version: ${{ steps.context.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+
+      - name: Read repo version
+        id: repo-version
+        run: echo "value=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+
+      - name: Determine build context
+        id: context
+        env:
+          MODE: ${{ inputs.mode || 'branch' }}
+          BRANCH_NAME: ${{ inputs.branch_name || github.ref_name }}
+          REF_NAME: ${{ github.ref_name }}
+          REPO_VERSION: ${{ steps.repo-version.outputs.value }}
+          RUN_NUMBER: ${{ github.run_number }}
+          SHA: ${{ github.sha }}
+        run: |
+          node .github/scripts/docker/build-context.mjs \
+            --mode "$MODE" \
+            --branch "$BRANCH_NAME" \
+            --ref-name "$REF_NAME" \
+            --repo-version "$REPO_VERSION" \
+            --run-number "$RUN_NUMBER" \
+            --sha "$SHA"
+
+  build-and-push:
+    needs: determine-build-context
+    runs-on: ${{ matrix.runner }}
+    env:
+      DOCKER_VOLUME_PATH: /data
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.determine-build-context.outputs.build_matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Login to GHCR
+        if: inputs.push_enabled
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        if: inputs.push_enabled && needs.determine-build-context.outputs.push_to_docker == 'true'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Determine publish tags
+        id: tags
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          node .github/scripts/docker/image-tags.mjs \
+            --release-type "${{ needs.determine-build-context.outputs.release_type }}" \
+            --version "${{ needs.determine-build-context.outputs.version }}" \
+            --platform "${{ matrix.docker_platform }}" \
+            --sha "${{ github.sha }}" \
+            ${{ needs.determine-build-context.outputs.push_to_docker == 'true' && '--include-docker' || '' }}
+
+      - name: Build and push platform image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: ./packages/docker/Dockerfile
+          platforms: ${{ matrix.docker_platform }}
+          sbom: true
+          push: ${{ inputs.push_enabled }}
+          tags: ${{ steps.tags.outputs.platform_tags }}
+          build-args: |
+            DEPLOYERY_VERSION=${{ needs.determine-build-context.outputs.version }}
+            DEPLOYERY_DOCKER_VOLUME_PATH=${{ env.DOCKER_VOLUME_PATH }}
+            BUILD_REVISION=${{ github.sha }}
+            BUILD_SOURCE=${{ github.server_url }}/${{ github.repository }}
+
+  image-manifest:
+    needs: [determine-build-context, build-and-push]
+    if: inputs.push_enabled
+    runs-on: ubuntu-latest
+    outputs:
+      primary_tag: ${{ steps.tags.outputs.primary_tag }}
+      manifest_digest: ${{ steps.manifest-digest.outputs.value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        if: needs.determine-build-context.outputs.push_to_docker == 'true'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Determine manifest tags
+        id: tags
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          node .github/scripts/docker/image-tags.mjs \
+            --release-type "${{ needs.determine-build-context.outputs.release_type }}" \
+            --version "${{ needs.determine-build-context.outputs.version }}" \
+            --sha "${{ github.sha }}" \
+            ${{ needs.determine-build-context.outputs.push_to_docker == 'true' && '--include-docker' || '' }}
+
+      - name: Create multi-arch manifests
+        env:
+          MANIFEST_TAGS: ${{ steps.tags.outputs.manifest_tags }}
+          PLATFORMS_JSON: ${{ needs.determine-build-context.outputs.platforms }}
+        run: node .github/scripts/docker/image-manifest.mjs
+
+      - name: Get manifest digest
+        id: manifest-digest
+        run: |
+          digest=$(docker buildx imagetools inspect "${{ steps.tags.outputs.primary_tag }}" --format '{{json .Manifest.Digest}}' | tr -d '"')
+          echo "value=$digest" >> "$GITHUB_OUTPUT"
+
+  security-scan:
+    needs: [determine-build-context, image-manifest]
+    if: inputs.push_enabled && needs.determine-build-context.outputs.release_type != 'branch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy scan
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # 0.28.0
+        with:
+          image-ref: ${{ needs.image-manifest.outputs.primary_tag }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@5c8a8a642e79153f5d047b10ec1cba1d1cc65699 # v3.35.1
+        with:
+          sarif_file: trivy-results.sarif
+
+  provenance:
+    needs: [determine-build-context, image-manifest]
+    # Only publish provenance for real releases (beta/stable), not preview branch builds.
+    if: inputs.push_enabled && needs.determine-build-context.outputs.release_type != 'branch'
+    permissions:
+      actions: read
+      id-token: write
+      packages: write
+      attestations: write
+      contents: read
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
+    with:
+      image: ghcr.io/${{ github.repository_owner }}/deployery
+      digest: ${{ needs.image-manifest.outputs.manifest_digest }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}

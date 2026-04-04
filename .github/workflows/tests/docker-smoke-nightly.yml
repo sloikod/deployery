@@ -1,0 +1,16 @@
+name: Docker Smoke Nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 3 AM UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  smoke:
+    uses: ./.github/workflows/tests/docker-smoke.yml
+    with:
+      no_cache: true

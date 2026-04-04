@@ -1,0 +1,40 @@
+# Contributor License Agreement
+
+Version 1.0 - _Adapted from the Apache Software Foundation Individual Contributor License Agreement v2.2._
+
+## 1. Definitions
+
+**"Contribution"** means any original work of authorship that You intentionally submit to the Deployery project for inclusion - including code, documentation, tests, configuration, and other material. For purposes of this definition, "submitted" means any form of electronic, verbal, or written communication sent to the project or its representatives, but excluding communication conspicuously marked or otherwise designated in writing by You as "Not a Contribution."
+
+**"You"** means the individual or legal entity submitting a Contribution. For legal entities, "You" includes all entities that control, are controlled by, or are under common control with the submitting entity. "Control" means (i) the power, direct or indirect, to cause the direction or management of such entity, (ii) ownership of fifty percent (50%) or more of the outstanding shares, or (iii) beneficial ownership of such entity.
+
+## 2. Copyright License
+
+You grant the Deployery project and all recipients of software distributed by it a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare derivative works of, publicly display, publicly perform, sublicense, and distribute Your Contributions and derivative works.
+
+## 3. Patent License
+
+You grant the Deployery project and all recipients of software distributed by it a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable patent license to make, have made, use, offer to sell, sell, import, and otherwise transfer Your Contributions, where such license applies only to those patent claims licensable by You that are necessarily infringed by Your Contribution(s) alone or by combination of Your Contribution(s) with the project.
+
+If any entity files patent litigation alleging that the project or a Contribution constitutes direct or contributory patent infringement, the patent licenses granted to that entity under this agreement terminate as of the date such litigation is filed.
+
+## 4. Representations
+
+You represent that:
+
+1. You are legally entitled to grant the above licenses. If Your employer has rights to intellectual property that You create that includes Your Contributions, You represent that You have received permission to make Contributions on behalf of that employer, or that Your employer has waived such rights for Your Contributions to the Deployery project.
+2. Each Contribution is Your original creation (see Section 5 for submissions on behalf of others).
+3. Your Contributions are provided WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied, including without limitation any warranties or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE.
+4. You will promptly notify the Deployery project if any of the above statements become inaccurate.
+
+## 5. Third-Party Submissions
+
+Should You wish to submit work that is not Your original creation, You may submit it to the Deployery project separately from any Contribution, identifying the complete details of its source and of any license or other restriction of which You are personally aware, and conspicuously marking the work as "Submitted on behalf of a third-party: [named here]".
+
+## 6. General
+
+You retain ownership of Your Contributions.
+
+This agreement does not obligate the Deployery project to use any Contribution.
+
+If any provision of this agreement is held unenforceable, the remaining provisions remain in effect.

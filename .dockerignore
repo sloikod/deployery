@@ -1,0 +1,12 @@
+# Exclude everything by default
+**
+
+# Include
+!packages/
+!packages/docker/
+!packages/docker/rootfs/
+!packages/docker/rootfs/**
+
+# Exclude from copy
+packages/docker/rootfs/**/*.test.*
+packages/docker/rootfs/**/*.spec.*

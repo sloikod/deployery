@@ -1,0 +1,23 @@
+name: PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title format
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if ! echo "$TITLE" | grep -qE '^(fix|feat|docs|test|ci|build|perf|refactor|revert|chore|wip): .+'; then
+            echo "PR title must match: <type>: <description>"
+            echo "Valid types: fix, feat, docs, test, ci, build, perf, refactor, revert, chore, wip"
+            echo "Got: $TITLE"
+            exit 1
+          fi

@@ -1,0 +1,20 @@
+{
+	"window.menuBarVisibility": "visible",
+	"workbench.preferredLightColorTheme": "Light 2026",
+	"workbench.preferredDarkColorTheme": "Dark 2026",
+	"window.autoDetectColorScheme": true,
+	"workbench.iconTheme": "flow-dim",
+	"workbench.startupEditor": "none",
+	"workbench.welcomePage.enabled": false,
+	"workbench.welcomePage.walkthroughs.openOnInstall": false,
+	"workbench.tips.enabled": false,
+	"editor.minimap.enabled": false,
+	"security.workspace.trust.enabled": false,
+	"chat.agent.enabled": false,
+	"chat.disableAIFeatures": true,
+	"workbench.secondarySideBar.defaultVisibility": "hidden",
+	"editor.mouseWheelZoom": true,
+	"files.autoSave": "afterDelay",
+	"files.autoSaveDelay": 1000,
+	"explorer.compactFolders": false
+}
