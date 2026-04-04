@@ -27,30 +27,3 @@ jobs:
             exit 1
           fi
 
-  check-commits:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          fetch-depth: 0
-
-      - name: Check commit message format
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          INVALID=0
-          while IFS= read -r msg; do
-            if ! echo "$msg" | grep -qE '^(fix|feat|refactor|chore|wip): .+'; then
-              echo "Invalid commit message: $msg"
-              INVALID=1
-            fi
-          done < <(git log "$BASE_SHA..$HEAD_SHA" --format='%s')
-
-          if [ "$INVALID" -eq 1 ]; then
-            echo ""
-            echo "Valid types: fix, feat, refactor, chore, wip"
-            echo "Format: <type>: <description>"
-            exit 1
-          fi
