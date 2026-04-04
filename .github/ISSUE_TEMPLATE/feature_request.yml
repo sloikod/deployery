@@ -1,0 +1,59 @@
+name: Feature Request
+description: Suggest a new feature or improvement for Deployery
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to improve Deployery? Describe it below. The more context you provide, the easier it is to evaluate and prioritize.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What problem does this solve, or what workflow does it enable?
+      placeholder: I often need to... but currently there's no way to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the feature or change you'd like to see.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of Deployery would this affect?
+      options:
+        - Core runtime
+        - Extensions
+        - UI/UX
+        - Docker / deployment
+        - Authentication / permissions
+        - Workflows / API
+        - Integrations
+        - Developer experience
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you tried any workarounds or alternative approaches?
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Links, mockups, related issues, or anything else that helps illustrate the idea.
+    validations:
+      required: false

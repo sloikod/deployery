@@ -20,10 +20,6 @@ updates:
       prefix: 'chore'
     labels: []
     ignore:
-      # Ignore patch updates for all dependencies
-      - dependency-name: '*'
-        update-types:
-          - version-update:semver-patch
       # Ignore major updates to Node.js types, because they need to
       # correspond to the Node.js engine version
       - dependency-name: '@types/node'

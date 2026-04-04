@@ -6,8 +6,6 @@ Content outside of third party components is available under the "Deployery Comm
 
 ## Deployery Community License
 
-Version 1.0
-
 ### Acceptance
 
 By using the software, you agree to all of the terms and conditions below.
@@ -64,10 +62,6 @@ If the licensor provides you with notice of your violation, and you cease all vi
 ### No Warranty or Liability
 
 **The software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement.** In no event shall the licensor be liable to you for any damages arising out of these terms or the use or nature of the software, under any kind of legal claim, including but not limited to contract, tort, or strict liability.
-
-### Governing Law and Jurisdiction
-
-This license is governed by and construed in accordance with the laws of [JURISDICTION], without regard to its conflict-of-law principles. Any dispute arising under this license shall be subject to the exclusive jurisdiction of the courts located in [JURISDICTION].
 
 ### Definitions
 
