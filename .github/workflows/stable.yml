@@ -1,0 +1,50 @@
+name: Stable
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+  security-events: write
+
+jobs:
+  # Guard against accidentally tagging a release from a feature branch.
+  # This runs before the expensive image build so a bad tag fails fast.
+  verify-stable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure the release tag points to stable
+        run: |
+          # Workflow YAML cannot import the shared config package, so the
+          # protected stable branch is checked explicitly here.
+          if ! git branch -r --contains "$GITHUB_SHA" | grep -q "origin/stable"; then
+            echo "Stable releases must be tagged from stable."
+            exit 1
+          fi
+
+  publish-images:
+    needs: verify-stable
+    uses: ./.github/workflows/release.yml
+    with:
+      mode: stable
+      push_enabled: true
+    secrets: inherit
+
+  create-release:
+    needs: publish-images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
+        with:
+          generate_release_notes: true
+          body: |
+            Container image: `${{ needs.publish-images.outputs.primary_tag }}`

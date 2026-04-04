@@ -1,0 +1,10 @@
+{
+	"name": "@deployery/constants",
+	"private": true,
+	"exports": {
+		".": {
+			"types": "./index.d.ts",
+			"default": "./index.mjs"
+		}
+	}
+}

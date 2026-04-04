@@ -1,22 +1,36 @@
 {
-  "name": "deployery",
-  "private": true,
-  "packageManager": "pnpm@10.32.1",
-  "engines": {
-    "node": ">=22"
-  },
-  "scripts": {
-    "build": "turbo run build",
-    "check": "turbo run check && eslint . --cache && vitest run",
-    "dev": "turbo run dev"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@vitest/coverage-v8": "^4.1.2",
-    "eslint": "^10.1.0",
-    "turbo": "^2.8.21",
-    "typescript": "^6.0.2",
-    "typescript-eslint": "^8.57.2",
-    "vitest": "^4.1.2"
-  }
+	"name": "deployery",
+	"version": "1.0.0-beta",
+	"private": true,
+	"packageManager": "pnpm@10.33.0",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"check": "turbo run check lint && eslint . --cache && node scripts/format.mjs -n && node scripts/llm.mjs -n && node scripts/periods.mjs -n && vitest run",
+		"check:llm": "node scripts/llm.mjs -n",
+		"check:periods": "node scripts/periods.mjs -n",
+		"check:prettier": "node scripts/format.mjs -n",
+		"format": "node scripts/llm.mjs -y && node scripts/periods.mjs -y && prettier --write .",
+		"format:llm": "node scripts/llm.mjs -y",
+		"format:periods": "node scripts/periods.mjs -y",
+		"format:prettier": "prettier --write ."
+	},
+	"prettier": {
+		"singleQuote": true,
+		"printWidth": 100,
+		"useTabs": true
+	},
+	"devDependencies": {
+		"@deployery/configs": "workspace:*",
+		"@deployery/constants": "workspace:*",
+		"@vitest/coverage-v8": "^4.1.2",
+		"eslint": "^9.39.4",
+		"prettier": "^3.8.1",
+		"turbo": "^2.9.3",
+		"typescript": "^6.0.2",
+		"vitest": "^4.1.2"
+	}
 }

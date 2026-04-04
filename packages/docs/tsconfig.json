@@ -1,0 +1,18 @@
+{
+	"extends": "@deployery/configs/typescript/next.json",
+	"compilerOptions": {
+		"forceConsistentCasingInFileNames": true,
+		"paths": {
+			"@/*": ["./*"],
+			"collections/*": ["./.source/*"]
+		}
+	},
+	"include": [
+		"next-env.d.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		".next/types/**/*.ts",
+		".next/dev/types/**/*.ts"
+	],
+	"exclude": ["node_modules"]
+}

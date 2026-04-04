@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/sloikod/deployery/tree/stable/docs
+    about: Check the docs before opening an issue — your question may already be answered.
+  - name: Discussions
+    url: https://github.com/sloikod/deployery/discussions
+    about: For questions, ideas, or general conversation that isn't a bug or feature request.

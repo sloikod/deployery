@@ -1,0 +1,9 @@
+{
+	"extends": "@deployery/configs/typescript/node.json",
+	"compilerOptions": {
+		"rootDir": "rootfs/opt/deployery",
+		"noEmit": true,
+		"types": ["node"]
+	},
+	"include": ["rootfs/opt/deployery/**/*.ts"]
+}

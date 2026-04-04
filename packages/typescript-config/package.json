@@ -1,8 +1,0 @@
-{
-  "name": "@deployery/typescript-config",
-  "private": true,
-  "exports": {
-    "./base.json": "./base.json",
-    "./next.json": "./next.json"
-  }
-}

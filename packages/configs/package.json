@@ -1,0 +1,21 @@
+{
+	"name": "@deployery/configs",
+	"private": true,
+	"scripts": {
+		"check": "eslint ."
+	},
+	"exports": {
+		"./eslint/base.mjs": "./eslint/base.mjs",
+		"./eslint/next.mjs": "./eslint/next.mjs",
+		"./typescript/base.json": "./typescript/base.json",
+		"./typescript/node.json": "./typescript/node.json",
+		"./typescript/next.json": "./typescript/next.json"
+	},
+	"dependencies": {
+		"@eslint/js": "^9.39.4",
+		"eslint": "^9.39.4",
+		"eslint-config-next": "16.2.2",
+		"globals": "^17.4.0",
+		"typescript-eslint": "^8.58.0"
+	}
+}
