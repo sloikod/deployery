@@ -8,15 +8,6 @@
 - Consider the following supply chain security hardening once the product has enterprise users. Trivy scanning, SBOM generation, and SLSA L3 provenance are already in place - only this remains:
   - **VEX attestations (Vulnerability Exploitability eXchange)** - pair with the existing SBOM to explicitly flag known CVEs that are present in dependencies but not actually reachable/exploitable. Prevents false-positive vulnerability scanner alerts from blocking enterprise deployments. Low priority until scanner adoption (Trivy, Grype, Wiz, Snyk) is broader and a specific enterprise customer is blocked by a false positive.
 
-Go to GitHub repo -> Settings -> Branches -> Add branch protection rule for `beta` and `stable`:
-
-- Require a pull request before merging.
-- Require status checks to pass (select the CI check)
-- Block direct pushes.
-- Add CLA as a required status check.
-
 Replace `<div class="letterpress"></div>` and `<a class="window-appicon"></a>` branding in code-server with our own.
-
-Setup feature requests and issues/PRs/tags properly.
 
 Add README.md - a good example: https://github.com/n8n-io/n8n.
