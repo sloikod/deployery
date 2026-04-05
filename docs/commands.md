@@ -1,6 +1,8 @@
 # Commands
 
-Run repo-wide commands from the root. Use `pnpm check` as the single repo-wide mistake check command. Run a command in one workspace with `pnpm -F <workspace-name> <command>`.
+Run repo-wide commands from the root. Run a command in one workspace with `pnpm -F <workspace-name> <command>`.
+
+- `pnpm check` runs the full suite of checks: type checking, linting, formatting, and tests. Run this before pushing - CI runs the same thing.
 
 - `pnpm i` installs package(s).
 - Shared project constants (name, repo, registry, URLs) live in `@deployery/constants`. These are developer constants - not user configuration.

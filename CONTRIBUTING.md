@@ -9,13 +9,14 @@
 ## If you have collaborator access
 
 1. Create a branch from `beta` following the [branch naming conventions](docs/branch-names.md)
-2. Push your branch and open a PR targeting `beta`.
-3. CI runs automatically on the PR.
-4. Once CI passes (and any required reviews are approved), merge.
+2. Run `pnpm check` locally and fix any failures before pushing.
+3. Push your branch and open a PR targeting `beta`.
+4. CI runs automatically on the PR.
+5. Once CI passes (and any required reviews are approved), merge.
 
 ## If you are an external contributor
 
-Same flow, but fork the repo first. Open a PR from your fork's branch to `beta` on this repo.
+Same flow, but fork the repo first. Run `pnpm check` locally before pushing. Open a PR from your fork's branch to `beta` on this repo.
 
 ## Contributor License Agreement
 
