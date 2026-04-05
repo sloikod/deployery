@@ -19,6 +19,16 @@
 - [ ] Added or updated tests
 - [ ] Tested manually
 
+## CLA
+
+<!-- If this is your first contribution, sign the CLA by posting the exact comment below on this PR. -->
+
+If you have not signed the CLA before, comment the following on this pull request so the `cla` check can pass:
+
+```
+I have read the CLA Document and I hereby sign the CLA
+```
+
 ## Checklist
 
 - [ ] PR title follows the [conventional commit format](../docs/commit-messages.md)
