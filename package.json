@@ -9,14 +9,16 @@
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
-		"check": "turbo run check lint && eslint . --cache && node scripts/format.mjs -n && node scripts/llm.mjs -n && node scripts/periods.mjs -n && vitest run",
+		"check": "turbo run check lint && eslint . --cache && node scripts/formatting.mjs -n && node scripts/llm.mjs -n && node scripts/periods.mjs -n && vitest run",
+		"check:formatting": "node scripts/formatting.mjs -n",
 		"check:llm": "node scripts/llm.mjs -n",
 		"check:periods": "node scripts/periods.mjs -n",
-		"check:prettier": "node scripts/format.mjs -n",
-		"format": "node scripts/llm.mjs -y && node scripts/periods.mjs -y && prettier --write .",
+		"check:prettier": "node scripts/formatting.mjs -n",
+		"format": "node scripts/llm.mjs -y && node scripts/periods.mjs -y && node scripts/formatting.mjs -y",
+		"format:formatting": "node scripts/formatting.mjs -y",
 		"format:llm": "node scripts/llm.mjs -y",
 		"format:periods": "node scripts/periods.mjs -y",
-		"format:prettier": "prettier --write ."
+		"format:prettier": "node scripts/formatting.mjs -y"
 	},
 	"prettier": {
 		"singleQuote": true,
