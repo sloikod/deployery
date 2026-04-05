@@ -44,12 +44,8 @@ jobs:
           custom-notsigned-prcomment: |
             Thanks for the contribution.
 
-            Before this pull request can be merged, please read the CLA:
-            $pathToCLADocument
+            Before this pull request can be merged, please read and sign the CLA:
+            https://github.com/sloikod/deployery/blob/stable/CLA.md
 
-            Then add this exact comment on this pull request:
-
-            ```
-            I have read the CLA Document and I hereby sign the CLA
-            ```
+            To sign, add the following as a comment on this pull request:
           custom-pr-sign-comment: I have read the CLA Document and I hereby sign the CLA
