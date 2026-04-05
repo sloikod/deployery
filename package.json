@@ -29,7 +29,7 @@
 		"@deployery/configs": "workspace:*",
 		"@deployery/constants": "workspace:*",
 		"@vitest/coverage-v8": "^4.1.2",
-		"eslint": "^9.39.4",
+		"eslint": "^10.2.0",
 		"prettier": "^3.8.1",
 		"turbo": "^2.9.3",
 		"typescript": "^6.0.2",
